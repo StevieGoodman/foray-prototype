@@ -5,7 +5,7 @@ local Waiter = require(ReplicatedStorage.Packages.Waiter)
 
 Knit.OnStart()
 :andThen(function()
-    for _, component in Waiter.getChildren(script, "ModuleScript", "ClassName") do
+    for _, component in Waiter.get(Waiter.children(script), Waiter.matchClassName("ModuleScript")) do
         require(component)
     end
     print(`Component has successfully started on the client!`)
