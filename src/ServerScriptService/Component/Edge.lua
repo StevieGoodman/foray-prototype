@@ -30,6 +30,8 @@ local Edge = Component.new {
 }
 
 function Edge:Construct()
+    self.Length = (self.Instance.Attachment0.Position - self.Instance.Attachment1.Position).Magnitude
+
     self._nodes = {
         NodeComponent:FromInstance(self.Instance.Attachment0.Parent),
         NodeComponent:FromInstance(self.Instance.Attachment1.Parent),
@@ -49,7 +51,7 @@ end
 function Edge:GetConnectedNode(currentNode): table
     assert(table.find(self._nodes, currentNode) ~= nil, `Cannot get connected node from a node that is not connected to this edge! ({currentNode.Instance:GetFullName()})`)
     return
-        if self._nodes[1] == currentNode
+        if self._nodes[1].Id == currentNode.Id
         then self._nodes[2]
         else self._nodes[1]
 end

@@ -23,26 +23,25 @@ local UnitGroup = Component.new {
 }
 
 function UnitGroup.new(startNode, endNode, unitCount)
+    local path = startNode:CalculatePath(endNode)
+    if path == nil then return end
     local self = TEMPLATE_UNIT_GROUP:Clone()
     self.Parent = UNIT_GROUP_FOLDER
     local success, result = UnitGroup:WaitForInstance(self):await()
     assert(success, result)
     self = result
-    self.StartNode:Set(startNode)
-    self.EndNode:Set(endNode)
+    self.Path:Set(path)
     self.UnitCount:Set(unitCount)
-    self:PivotTo(startNode:GetPivot())
+    self:_pivotTo(startNode:GetPivot())
 end
 
 function UnitGroup:Construct()
-    self.StartNode = ValueObject.new(nil)
-    self.EndNode = ValueObject.new(nil)
     self.UnitCount = ValueObject.new(nil)
     self.MoveSpeed = ValueObject.new(1)
+    self.Path = ValueObject.new(nil)
 
     self._trove = Trove.new()
-    self._trove:Add(self.StartNode)
-    self._trove:Add(self.EndNode)
+    self._trove:Add(self.Path)
     self._trove:Add(self.UnitCount)
     self._trove:Add(self.MoveSpeed)
 end
@@ -58,7 +57,7 @@ function UnitGroup:Start()
 end
 
 function UnitGroup:SteppedUpdate(deltaTime: number)
-    self:_moveTowardsEndNode(deltaTime)
+    self:_moveTowardsNextNode(deltaTime)
 end
 
 function UnitGroup:Stop()
@@ -69,21 +68,23 @@ function UnitGroup:GetPivot()
     return self.Instance:GetPivot()
 end
 
-function UnitGroup:PivotTo(cframe: CFrame)
-    self.Instance:PivotTo(cframe)
-end
-
-function UnitGroup:_moveTowardsEndNode(deltaTime: number)
+function UnitGroup:_moveTowardsNextNode(deltaTime: number)
+    if self.Path:Get() == nil or self.Path:Get()[1] == nil then return end
     local currentPivot = self:GetPivot()
-    local endNodePivot = self.EndNode:Get():GetPivot()
-    local distance = (endNodePivot.Position - currentPivot.Position).Magnitude
-    local distanceTravelled = self.MoveSpeed:Get() * deltaTime
+    local nextNode = self.Path:Get()[1]
+    local nextNodePivot = nextNode:GetPivot()
+    local distance = (nextNodePivot.Position - currentPivot.Position).Magnitude
+    local distanceTravelled = math.min(self.MoveSpeed:Get() * deltaTime, distance)
     local remainingDistance = distance - distanceTravelled
     if remainingDistance <= 0 then
-        self:_enterNode(self.EndNode:Get())
+        local path = self.Path:Get()
+        table.remove(path, 1)
+        self.Path:Set(path)
+        if #path ~= 0 then return end
+        self:_enterNode(nextNode)
     else
-        local newPivot = currentPivot:Lerp(endNodePivot, distanceTravelled / distance)
-        self:PivotTo(newPivot)
+        local newPivot = currentPivot:Lerp(nextNodePivot, distanceTravelled / distance)
+        self:_pivotTo(newPivot)
     end
 end
 
@@ -92,6 +93,10 @@ function UnitGroup:_enterNode(node)
     local nodeUnitCount = node.UnitCount:Get()
     node.UnitCount:Set(nodeUnitCount + unitCount)
     self.Instance:Destroy()
+end
+
+function UnitGroup:_pivotTo(cframe: CFrame)
+    self.Instance:PivotTo(cframe)
 end
 
 return UnitGroup
