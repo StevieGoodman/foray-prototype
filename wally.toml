@@ -6,6 +6,7 @@ registry = "https://github.com/UpliftGames/wally-index"
 realm = "shared"
 
 [dependencies]
+Comm = "sleitnick/comm@1.0.1"
 Component = "sleitnick/component@2.4.6"
 ComponentExtensions = "steviegoodman/component-extensions@1.1.2"
 Cmdr = "evaera/cmdr@1.12.0"

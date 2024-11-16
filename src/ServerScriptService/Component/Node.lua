@@ -1,6 +1,7 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerScriptService = game:GetService("ServerScriptService")
 
+local Comm = require(ReplicatedStorage.Packages.Comm)
 local Component = require(ReplicatedStorage.Packages.Component)
 local ComponentExtensions = require(ReplicatedStorage.Packages.ComponentExtensions)
 local Trove = require(ReplicatedStorage.Packages.Trove)
@@ -18,25 +19,42 @@ local Node = Component.new {
     },
 }
 
+Node.IdCounter = 1
+
+function Node.FromId(id: number)
+    local nodes = Node:GetAll()
+    for _, node in nodes do
+        if node.Id ~= id then continue end
+        return node
+    end
+end
+
 function Node:Construct()
+    self.Id = Node.IdCounter
+    Node.IdCounter += 1
     self.ProductionRate = ValueObject.new(1)
     self.UnitCount = ValueObject.new(0)
     self.Edges = ValueObject.new({})
+
+    self._comm = Comm.ServerComm.new(self.Instance, self.Tag)
+    self._comm:BindFunction("SendUnitsTo", function(_, nodeId, unitCount)
+        local node = Node.FromId(nodeId)
+        if node == nil then return end
+        self:SendUnitsTo(node, unitCount)
+    end)
+    self._properties = {
+        Id = self._comm:CreateProperty("Id", self.Id),
+        UnitCount = self._comm:CreateProperty("UnitCount", self.UnitCount),
+    }
 
     self._trove = Trove.new()
     self._trove:Add(self.UnitCount)
 end
 
 function Node:Start()
-    self._trove:Add(self.UnitCount.Changed:Connect(function()
+    self._trove:Add(self.UnitCount.Changed:Connect(function(newUnitCount)
+        self._properties.UnitCount:Set(newUnitCount)
         self:_updateUnitCounter()
-    end))
-    self._trove:Add(self.Edges.Changed:Connect(function(edges)
-        task.wait(5)
-        for _, edge in edges do
-            print("Sending units to edge")
-            self:SendUnitsTo(edge:GetConnectedNode(self), math.random() * self.UnitCount:Get())
-        end
     end))
 end
 
@@ -53,8 +71,8 @@ function Node:GetPivot()
 end
 
 function Node:SendUnitsTo(node, unitCount: number)
+    unitCount = math.min(unitCount, self.UnitCount:Get())
     unitCount = math.floor(unitCount)
-    assert(self.UnitCount:Get() >= unitCount, `Cannot send more units than are available! ({self.Instance:GetFullName()})`)
     UnitGroupComponent.new(self, node, unitCount)
     self.UnitCount:Set(self.UnitCount:Get() - unitCount)
 end
