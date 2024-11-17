@@ -13,15 +13,11 @@ function RoundService:KnitInit()
 end
 
 function RoundService:KnitStart()
-    self:StartRound()
+    self:_startCycle()
 end
 
-function RoundService:StartRound()
-    return RoundComponent.new("Testing Map")
-end
-
-function RoundService:EndRound()
-
+function RoundService:_startCycle()
+    RoundComponent.new("Testing Map")
 end
 
 return RoundService
