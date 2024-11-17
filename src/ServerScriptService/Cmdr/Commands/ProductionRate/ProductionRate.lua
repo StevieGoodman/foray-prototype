@@ -5,7 +5,7 @@ local Knit = require(ReplicatedStorage.Packages.Knit)
 return {
     Name = "ProductionRate",
     Aliases = {},
-    Description = "Sets the production rate of the hovered node",
+    Description = "Sets the production rate of the selected node(s)",
     Group = "development",
     Args = {
         {
