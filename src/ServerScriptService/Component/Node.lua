@@ -9,6 +9,7 @@ local Trove = require(ReplicatedStorage.Packages.Trove)
 local ValueObject = require(ReplicatedStorage.Packages.ValueObject)
 local Waiter = require(ReplicatedStorage.Packages.Waiter)
 
+local RoundComponent = require(ServerScriptService.Component.Round)
 local UnitGroupComponent = require(ServerScriptService.Component.UnitGroup)
 
 local Node = Component.new {
@@ -16,7 +17,8 @@ local Node = Component.new {
     Ancestors = { workspace },
     Extensions = {
         ComponentExtensions.IsClass("BasePart"),
-        ComponentExtensions.RequiresInstance("UnitCounter", Waiter.descendants, Waiter.matchTag)
+        ComponentExtensions.RequiresComponent(RoundComponent, Waiter.ancestors),
+        ComponentExtensions.RequiresInstance("UnitCounter", Waiter.descendants, Waiter.matchTag),
     },
 }
 
@@ -37,6 +39,7 @@ function Node:Construct()
     self.ProductionRate = ValueObject.new(1)
     self.UnitCount = ValueObject.new(0)
     self.Edges = ValueObject.new({})
+    self.Round = self._components.Round
 
     self._comm = Comm.ServerComm.new(self.Instance, self.Tag)
     self._comm:BindFunction("SendUnitsTo", function(_, nodeId, unitCount)
@@ -77,14 +80,16 @@ function Node:CalculatePath(to)
 
     -- Calculate path using Dijkstra's algorithm
     local predecessors = {}
-    local queue = table.clone(distances)
+    local queue = self:GetAllConnectedNodes()
+    table.insert(queue, self)
+
     while #queue ~= 0 do
-        local currentNodeId = TableUtil.Reduce(TableUtil.Keys(queue), function(a, b)
-            return if distances[a] < distances[b] then a else b
-        end)
-        local currentNode = Node.FromId(currentNodeId)
-        queue[currentNodeId] = nil
-        local currentDistanceTravelled = distances[currentNodeId]
+        local currentNode = TableUtil.Reduce(queue, function(a, b)
+            return if distances[a.Id] < distances[b.Id] then a else b
+        end, queue[1])
+        local index = table.find(queue, currentNode)
+        table.remove(queue, index)
+        local currentDistanceTravelled = distances[currentNode.Id]
         local edges = currentNode.Edges:Get()
         for _, edge in edges do
             local connectedNode = edge:GetConnectedNode(currentNode)

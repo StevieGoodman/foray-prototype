@@ -9,10 +9,6 @@ local Waiter = require(ReplicatedStorage.Packages.Waiter)
 local TEMPLATE_UNIT_GROUP = Waiter.getFirst(Waiter.descendants(ReplicatedStorage.Assets), Waiter.matchTag("UnitGroup"))
 assert(TEMPLATE_UNIT_GROUP ~= nil, "UnitGroup template not found")
 
-local UNIT_GROUP_FOLDER = Instance.new("Folder")
-UNIT_GROUP_FOLDER.Name = "Unit Groups"
-UNIT_GROUP_FOLDER.Parent = workspace
-
 local UnitGroup = Component.new {
     Tag = "UnitGroup",
     Ancestors = { workspace },
@@ -26,7 +22,7 @@ function UnitGroup.new(startNode, endNode, unitCount)
     local path = startNode:CalculatePath(endNode)
     if path == nil then return end
     local self = TEMPLATE_UNIT_GROUP:Clone()
-    self.Parent = UNIT_GROUP_FOLDER
+    self.Parent = startNode.Round:GetFolder("Unit Groups")
     local success, result = UnitGroup:WaitForInstance(self):await()
     assert(success, result)
     self = result
