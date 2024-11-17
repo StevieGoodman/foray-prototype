@@ -57,4 +57,6 @@ function Round:GetFolder(name)
     return folder
 end
 
+Round.new("Testing Map")
+
 return Round
