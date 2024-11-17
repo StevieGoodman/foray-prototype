@@ -1,4 +1,5 @@
 local ContextActionService = game:GetService("ContextActionService")
+local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
@@ -23,6 +24,8 @@ function SelectionController:KnitInit()
 
     self._selectedHighlightTrove = Trove.new()
     self._hoveredHighlightTrove = Trove.new()
+
+    self._selectedEventTrove = Trove.new()
 end
 
 function SelectionController:KnitStart()
@@ -36,6 +39,7 @@ function SelectionController:KnitStart()
 
     self.SelectedNode.Changed:Connect(function(selectedNode)
         self:_highlightNode(selectedNode, self._selectedHighlightTrove)
+        self:_bindSelectedNodeEvents(selectedNode)
     end)
     self.HoveredNode.Changed:Connect(function(hoveredNode)
         self:_highlightNode(hoveredNode, self._hoveredHighlightTrove)
@@ -64,7 +68,13 @@ function SelectionController:CalculateHoveredNode()
 end
 
 function SelectionController:_select()
-    self.SelectedNode:Set(self.HoveredNode:Get())
+    if self.HoveredNode:Get() == nil
+    or self.HoveredNode:Get().Owner:Get() == nil
+    or self.HoveredNode:Get().Owner:Get().Name ~= Players.LocalPlayer.Team.Name then
+        self.SelectedNode:Set(nil)
+    else
+        self.SelectedNode:Set(self.HoveredNode:Get())
+    end
 end
 
 function SelectionController:_highlightNode(node, trove)
@@ -80,6 +90,19 @@ function SelectionController:_highlightNode(node, trove)
     highlight.FillColor = Color3.new(1, 1, 1)
     highlight.Parent = node.Instance
     trove:Add(highlight)
+end
+
+function SelectionController:_bindSelectedNodeEvents(node)
+    self._selectedEventTrove:Clean()
+    if node == nil then return end
+    self._selectedEventTrove:Add(node.Owner.Changed:Connect(function(newOwner)
+        if newOwner:IsMember() then return end
+        self.SelectedNode:Set(nil)
+    end))
+    self._selectedEventTrove:Add(Players.LocalPlayer:GetPropertyChangedSignal("Team"):Connect(function()
+        if node.Owner:Get():IsMember() then return end
+        self.SelectedNode:Set(nil)
+    end))
 end
 
 return SelectionController

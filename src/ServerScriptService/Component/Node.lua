@@ -9,8 +9,9 @@ local Trove = require(ReplicatedStorage.Packages.Trove)
 local ValueObject = require(ReplicatedStorage.Packages.ValueObject)
 local Waiter = require(ReplicatedStorage.Packages.Waiter)
 
-local RoundComponent = require(ServerScriptService.Component.Round)
 local UnitGroupComponent = require(ServerScriptService.Component.UnitGroup)
+local RoundComponent = require(ServerScriptService.Component.Round)
+local TeamComponent = require(ServerScriptService.Component.Team)
 
 local Node = Component.new {
     Tag = "Node",
@@ -40,16 +41,19 @@ function Node:Construct()
     self.UnitCount = ValueObject.new(0)
     self.Edges = ValueObject.new({})
     self.Round = self._components.Round
+    self.Owner = ValueObject.new(TeamComponent.FromName(self.Instance:GetAttribute("DefaultOwner")))
 
     self._comm = Comm.ServerComm.new(self.Instance, self.Tag)
-    self._comm:BindFunction("SendUnitsTo", function(_, nodeId, unitCount)
+    self._comm:BindFunction("SendUnitsTo", function(player, nodeId, unitCount)
+        if not self:OwnedBy(player) then return end
         local node = Node.FromId(nodeId)
         if node == nil then return end
         self:SendUnitsTo(node, unitCount)
     end)
     self._properties = {
         Id = self._comm:CreateProperty("Id", self.Id),
-        UnitCount = self._comm:CreateProperty("UnitCount", self.UnitCount),
+        UnitCount = self._comm:CreateProperty("UnitCount", self.UnitCount:Get()),
+        Owner = self._comm:CreateProperty("Owner", if self.Owner:Get() == nil then nil else self.Owner:Get().Name),
     }
 
     self._trove = Trove.new()
@@ -60,6 +64,11 @@ function Node:Start()
     self._trove:Add(self.UnitCount.Changed:Connect(function(newUnitCount)
         self._properties.UnitCount:Set(newUnitCount)
         self:_updateUnitCounter()
+    end))
+    self:_updateColor()
+    self._trove:Add(self.Owner.Changed:Connect(function(newOwner)
+        self._properties.Owner:Set(newOwner.Name)
+        self:_updateColor()
     end))
 end
 
@@ -153,6 +162,18 @@ function Node:SendUnitsTo(node, unitCount: number)
     unitCount = math.floor(unitCount)
     UnitGroupComponent.new(self, node, unitCount)
     self.UnitCount:Set(self.UnitCount:Get() - unitCount)
+end
+
+function Node:OwnedBy(player: Player)
+    if self.Owner:Get() == nil then return false end
+    return self.Owner:Get():IsMember(player)
+end
+
+function Node:_updateColor()
+    self.Instance.Color =
+        if self.Owner:Get() == nil
+        then BrickColor.new("Dark stone grey").Color
+        else self.Owner:Get().Color
 end
 
 function Node:_produceUnits(deltaTime: number)

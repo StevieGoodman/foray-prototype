@@ -28,6 +28,7 @@ function UnitGroup.new(startNode, endNode, unitCount)
     self = result
     self.Path:Set(path)
     self.UnitCount:Set(unitCount)
+    self.Owner:Set(startNode.Owner:Get())
     self:_pivotTo(startNode:GetPivot())
 end
 
@@ -35,6 +36,7 @@ function UnitGroup:Construct()
     self.UnitCount = ValueObject.new(nil)
     self.MoveSpeed = ValueObject.new(1)
     self.Path = ValueObject.new(nil)
+    self.Owner = ValueObject.new(nil)
 
     self._trove = Trove.new()
     self._trove:Add(self.Path)
@@ -49,6 +51,9 @@ function UnitGroup:Start()
         else
             self._instances.UnitCounter.Text = newUnitCount
         end
+    end))
+    self._trove:Add(self.Owner.Changed:Connect(function(_)
+        self:_updateColor()
     end))
 end
 
@@ -93,6 +98,13 @@ end
 
 function UnitGroup:_pivotTo(cframe: CFrame)
     self.Instance:PivotTo(cframe)
+end
+
+function UnitGroup:_updateColor()
+    self.Instance.Color =
+        if self.Owner:Get() == nil
+        then BrickColor.new("Dark stone grey").Color
+        else self.Owner:Get().Color
 end
 
 return UnitGroup
