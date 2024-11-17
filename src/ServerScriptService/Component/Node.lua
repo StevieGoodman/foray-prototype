@@ -45,7 +45,7 @@ function Node:Construct()
 
     self._comm = Comm.ServerComm.new(self.Instance, self.Tag)
     self._comm:BindFunction("SendUnitsTo", function(player, nodeId, unitCount)
-        if not self:OwnedBy(player) then return end
+        if not self:OwnedBy(player) and not player:HasTag("BypassesEnabled") then return end
         local node = Node.FromId(nodeId)
         if node == nil then return end
         self:SendUnitsTo(node, unitCount)

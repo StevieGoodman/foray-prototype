@@ -68,9 +68,10 @@ function SelectionController:CalculateHoveredNode()
 end
 
 function SelectionController:_select()
-    if self.HoveredNode:Get() == nil
+    if not Players.LocalPlayer:HasTag("BypassesEnabled")
+    and (self.HoveredNode:Get() == nil
     or self.HoveredNode:Get().Owner:Get() == nil
-    or self.HoveredNode:Get().Owner:Get().Name ~= Players.LocalPlayer.Team.Name then
+    or self.HoveredNode:Get().Owner:Get().Name ~= Players.LocalPlayer.Team.Name) then
         self.SelectedNode:Set(nil)
     else
         self.SelectedNode:Set(self.HoveredNode:Get())

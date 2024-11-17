@@ -14,4 +14,5 @@ return function(commandContext, newOwner: Team?)
         return "The hovered instance is not a node. Was it just deleted?"
     end
     node.Owner:Set(TeamComponent.FromName(newOwner.Name))
+    return `Claimed {node.Instance.Name} for {newOwner.Name}.`
 end
