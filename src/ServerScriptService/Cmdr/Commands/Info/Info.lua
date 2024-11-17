@@ -1,19 +1,13 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
 local Knit = require(ReplicatedStorage.Packages.Knit)
 
 return {
-    Name = "Claim",
+    Name = "Info",
     Aliases = {},
-    Description = "Sets the owner of hovered node to the specified team",
+    Description = "Shows information about the selected node(s).",
     Group = "development",
-    Args = {
-        {
-            Type = "team",
-            Name = "Team",
-            Description = "Which team to set as the owner (defaults to command executor's team)",
-            Optional = true
-        },
-    },
+    Args = {},
     Data = function(_)
         local selectedNode = Knit.GetController("Selection").SelectedNode:Get()
         return if selectedNode == nil then nil else selectedNode.Instance

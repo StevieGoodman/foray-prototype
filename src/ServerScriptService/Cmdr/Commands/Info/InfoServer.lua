@@ -1,10 +1,8 @@
 local ServerScriptService = game:GetService("ServerScriptService")
 
 local NodeComponent = require(ServerScriptService.Component.Node)
-local TeamComponent = require(ServerScriptService.Component.Team)
 
-return function(commandContext, newOwner: Team?)
-    newOwner = newOwner or commandContext.Executor.Team
+return function(commandContext)
     local selectedNode = commandContext:GetData()
     if selectedNode == nil then
         return "No nodes are currently selected."
@@ -13,6 +11,8 @@ return function(commandContext, newOwner: Team?)
     if node == nil then
         return "The selected instance is not a node. Was it just deleted?"
     end
-    node.Owner:Set(TeamComponent.FromName(newOwner.Name))
-    return `Claimed {node.Instance.Name} for {newOwner.Name}.`
+    return `Node {node.Id}\
+Owned by: {if node.Owner:Get() == nil then "Nobody" else node.Owner:Get().Name}\
+Unit count: {node.UnitCount:Get()}\
+Production rate: {node.ProductionRate:Get()} units/s`
 end
