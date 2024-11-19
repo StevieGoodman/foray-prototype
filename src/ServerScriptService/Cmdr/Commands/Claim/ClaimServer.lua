@@ -13,6 +13,10 @@ return function(commandContext, newOwner: Team?)
     if node == nil then
         return "The selected instance is not a node. Was it just deleted?"
     end
-    node.Owner:Set(TeamComponent.FromName(newOwner.Name))
+    local team = TeamComponent:FromInstance(newOwner)
+    if node:GetUnitCount(team):Get() == 0 then
+        node:GiveUnits(1, team)
+    end
+    node.Owner:Set(team)
     return `Claimed {node.Instance.Name} for {newOwner.Name}.`
 end

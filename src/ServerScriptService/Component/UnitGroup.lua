@@ -90,9 +90,7 @@ function UnitGroup:_moveTowardsNextNode(deltaTime: number)
 end
 
 function UnitGroup:_enterNode(node)
-    local unitCount = self.UnitCount:Get()
-    local nodeUnitCount = node.UnitCount:Get()
-    node.UnitCount:Set(nodeUnitCount + unitCount)
+    node:GiveUnits(self.UnitCount:Get(), self.Owner:Get())
     self.Instance:Destroy()
 end
 

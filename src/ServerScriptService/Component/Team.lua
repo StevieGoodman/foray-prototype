@@ -14,6 +14,8 @@ local Team = Component.new {
     },
 }
 
+Team.Teams = ValueObject.new({})
+
 function Team.FromName(name: string)
     local teams = Team:GetAll()
     for _, team in teams do
@@ -30,6 +32,11 @@ function Team.new(name: string, brickColor: BrickColor)
     team:AddTag("Team")
     team.Parent = Teams
     return Team:WaitForInstance(team)
+        :andThen(function(teamComponent)
+            local teams = Team.Teams:Get()
+            table.insert(teams, teamComponent)
+            Team.Teams:Set(teams)
+        end)
 end
 
 function Team:Construct()

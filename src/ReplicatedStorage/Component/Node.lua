@@ -21,23 +21,19 @@ function Node:Construct()
     self.SendUnitsTo = self._comm:GetFunction("SendUnitsTo")
     self._properties = {
         Id = self._comm:GetProperty("Id"),
-        UnitCount = self._comm:GetProperty("UnitCount"),
         Owner = self._comm:GetProperty("Owner"),
     }
     self._properties.Id:OnReady():await()
-    self._properties.UnitCount:OnReady():await()
 
     self.Id = self._properties.Id:Get()
-    self.UnitCount = ValueObject.new(self._properties.UnitCount:Get())
     self.Owner = ValueObject.new(self._properties.Owner:Get())
 
     self._trove = Trove.new()
+    self._trove:Add(self._comm)
+    self._trove:Add(self.Owner)
 end
 
 function Node:Start()
-    self._trove:Add(self._properties.UnitCount:Observe(function(newUnitCount)
-        self.UnitCount:Set(newUnitCount)
-    end))
     self._trove:Add(self._properties.Owner:Observe(function(newOwner)
         self.Owner:Set(TeamComponent.FromName(newOwner))
     end))

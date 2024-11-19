@@ -13,6 +13,12 @@ return {
             Name = "unit count",
             Description = "New unit count",
         },
+        {
+            Type = "team",
+            Name = "team",
+            Description = "Which team to give units to. (defaults to owner of selected node)",
+            Optional = true,
+        }
     },
     Data = function(_)
         local selectedNode = Knit.GetController("Selection").SelectedNode:Get() or Knit.GetController("Selection").HoveredNode:Get()
