@@ -41,7 +41,7 @@ function Round:End()
 end
 
 function Round:Reset()
-    self:Destroy()
+    self:End()
     return Round.new(self.Name)
 end
 
