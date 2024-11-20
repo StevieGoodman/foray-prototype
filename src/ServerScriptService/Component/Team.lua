@@ -1,4 +1,5 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local ServerStorage = game:GetService("ServerStorage")
 local Teams = game:GetService("Teams")
 
 local Component = require(ReplicatedStorage.Packages.Component)
@@ -8,7 +9,7 @@ local ValueObject = require(ReplicatedStorage.Packages.ValueObject)
 
 local Team = Component.new {
     Tag = "Team",
-    Ancestors = { Teams },
+    Ancestors = { Teams, ServerStorage },
     Extensions = {
         ComponentExtensions.IsClass("Team"),
     },
@@ -28,9 +29,9 @@ function Team.new(name: string, brickColor: BrickColor)
     local team = Instance.new("Team")
     team.Name = name
     team.TeamColor = brickColor
-    team.AutoAssignable = true
+    team.AutoAssignable = name ~= "Neutral"
     team:AddTag("Team")
-    team.Parent = Teams
+    team.Parent = if name ~= "Neutral" then Teams else ServerStorage
     return Team:WaitForInstance(team)
         :andThen(function(teamComponent)
             local teams = Team.Teams:Get()
@@ -79,6 +80,7 @@ function Team:IsMember(player: Player)
     return player.Team == self.Team
 end
 
+Team.new("Neutral", BrickColor.new("Dark stone grey"))
 Team.new("Red", BrickColor.new("Bright red"))
 Team.new("Blue", BrickColor.new("Bright blue"))
 Team.new("Green", BrickColor.new("Bright green"))

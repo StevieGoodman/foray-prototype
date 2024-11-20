@@ -13,6 +13,7 @@ local UnitGroupComponent = require(ServerScriptService.Component.UnitGroup)
 local RoundComponent = require(ServerScriptService.Component.Round)
 local TeamComponent = require(ServerScriptService.Component.Team)
 
+local STARTING_UNIT_COUNT = 25
 local COMBAT_MULTIPLIER = 0.1
 local MIN_CASUALITY_COUNT = 4
 
@@ -43,9 +44,7 @@ function Node:Construct()
     self.ProductionRate = ValueObject.new(1)
     self.Edges = ValueObject.new({})
     self.Round = self._components.Round
-    self.Owner = ValueObject.new(TeamComponent.FromName(self.Instance:GetAttribute("DefaultOwner")))
-
-    self._lastTick = os.clock()
+    self.Owner = ValueObject.new(TeamComponent.FromName(self.Instance:GetAttribute("DefaultOwner") or "Neutral"))
 
     self._comm = Comm.ServerComm.new(self.Instance, self.Tag)
     self._comm:BindFunction("SendUnitsTo", function(player, nodeId, unitCount)
@@ -61,12 +60,10 @@ function Node:Construct()
 
     self._trove = Trove.new()
     self:_setUpUnitCounts()
-    if self.Owner:Get() ~= nil then
-        self:GiveUnits(1, self.Owner:Get())
-    end
 end
 
 function Node:Start()
+    self:GiveUnits(STARTING_UNIT_COUNT, self.Owner:Get())
     self:_updateColor()
     self._trove:Add(self.Owner.Changed:Connect(function(newOwner)
         self._properties.Owner:Set(if newOwner ~= nil then newOwner.Name else nil)
@@ -238,6 +235,10 @@ function Node:_produceUnits(deltaTime: number)
     end))
     if teamsPresent > 1 then return end
     local newUnits = self.ProductionRate:Get() * deltaTime
+    local isNeutral = self.Owner:Get().Name == "Neutral"
+    if isNeutral then
+        newUnits /= 2
+    end
     if self.Owner:Get() == nil then return end
     self:GiveUnits(newUnits, self.Owner:Get())
 end
