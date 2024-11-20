@@ -5,7 +5,6 @@ local Comm = require(ReplicatedStorage.Packages.Comm)
 local Component = require(ReplicatedStorage.Packages.Component)
 local ComponentExtensions = require(ReplicatedStorage.Packages.ComponentExtensions)
 local TableUtil = require(ReplicatedStorage.Packages.TableUtil)
-local Timer = require(ReplicatedStorage.Packages.Timer)
 local Trove = require(ReplicatedStorage.Packages.Trove)
 local ValueObject = require(ReplicatedStorage.Packages.ValueObject)
 local Waiter = require(ReplicatedStorage.Packages.Waiter)
@@ -15,6 +14,7 @@ local RoundComponent = require(ServerScriptService.Component.Round)
 local TeamComponent = require(ServerScriptService.Component.Team)
 
 local COMBAT_MULTIPLIER = 0.1
+local MIN_CASUALITY_COUNT = 4
 
 local Node = Component.new {
     Tag = "Node",
@@ -72,10 +72,11 @@ function Node:Start()
         self._properties.Owner:Set(if newOwner ~= nil then newOwner.Name else nil)
         self:_updateColor()
     end))
+end
 
-    Timer.Simple(0.5, function(deltaTime)
-        self:_tick(deltaTime)
-    end)
+function Node:SteppedUpdate(deltaTime: number)
+    self:_produceUnits(deltaTime)
+    self:_incrementBattle(deltaTime)
 end
 
 function Node:Stop()
@@ -200,13 +201,6 @@ function Node:GiveUnits(amount: number, team): number
     return amount
 end
 
-function Node:_tick()
-    local deltaTime = os.clock() - self._lastTick
-    self._lastTick = os.clock()
-    self:_produceUnits(deltaTime)
-    self:_incrementBattle(deltaTime)
-end
-
 function Node:_setUpUnitCounts()
     self._unitCounts = {}
     for _, team in TeamComponent.Teams:Get() do
@@ -291,6 +285,9 @@ function Node:_incrementBattle(deltaTime: number)
         casualties[teamName] = (casualties[teamName] or 0) + enemyCount * COMBAT_MULTIPLIER * deltaTime
     end
     for teamName, casualtyCount in casualties do
+        if 0 < casualtyCount and casualtyCount < MIN_CASUALITY_COUNT * deltaTime then
+            casualtyCount = MIN_CASUALITY_COUNT * deltaTime
+        end
         self:TakeUnits(casualtyCount, TeamComponent.FromName(teamName), false)
     end
 end
