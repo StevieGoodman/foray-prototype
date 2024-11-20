@@ -41,6 +41,7 @@ function Edge:Construct()
 end
 
 function Edge:Start()
+    self.Instance.Name = `Edge ({self._nodes[1].Id} ↔︎ {self._nodes[2].Id})`
     self:_register()
 end
 
