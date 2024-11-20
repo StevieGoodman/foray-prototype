@@ -13,7 +13,6 @@ return function(commandContext)
     end
     return
 `Node {node.Id}\
-Owned by: {if node.Owner:Get() == nil then "Nobody" else node.Owner:Get().Name}\
-Unit count: {node.UnitCount:Get()}\
+Owned by: {node.Owner:Get().Name}\
 Production rate: {node.ProductionRate:Get()} units/s`
 end
