@@ -161,11 +161,11 @@ end
 
 function Node:SendUnitsTo(node, unitCount: number)
     unitCount = self:TakeUnits(unitCount, self.Owner:Get(), true)
-    unitCount = math.floor(unitCount)
-    if unitCount <= 0 then
+    if unitCount <= 1 then
         self:GiveUnits(unitCount, self.Owner:Get())
         return
     end
+    unitCount = math.floor(unitCount)
     UnitGroupComponent.new(self, node, unitCount)
 end
 
