@@ -5,7 +5,7 @@ return {
     Name = "Claim",
     Aliases = {},
     Description = "Sets the owner of hovered node to the specified team",
-    Group = "development",
+    Group = "Developer",
     Args = {
         {
             Type = "team",

@@ -2,7 +2,7 @@ return {
     Name = "Team",
     Aliases = {},
     Description = "Sets a player(s) team",
-    Group = "development",
+    Group = "Developer",
     Args = {
         {
             Type = "players",

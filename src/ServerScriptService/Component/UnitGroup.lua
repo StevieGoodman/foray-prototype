@@ -81,7 +81,7 @@ function UnitGroup:_moveTowardsNextNode(deltaTime: number)
         local path = self.Path:Get()
         table.remove(path, 1)
         self.Path:Set(path)
-        if #path ~= 0 then return end
+        if #path ~= 0 and nextNode.Owner:Get().Name == self.Owner:Get().Name then return end
         self:_enterNode(nextNode)
     else
         local newPivot = currentPivot:Lerp(nextNodePivot, distanceTravelled / distance)

@@ -6,7 +6,7 @@ return {
     Name = "UnitCount",
     Aliases = {},
     Description = "Sets the unit count of the selected node(s)",
-    Group = "development",
+    Group = "Developer",
     Args = {
         {
             Type = "number",

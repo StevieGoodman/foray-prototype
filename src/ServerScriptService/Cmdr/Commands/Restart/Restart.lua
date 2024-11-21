@@ -2,6 +2,6 @@ return {
     Name = "Restart",
     Aliases = {},
     Description = "Restarts the round.",
-    Group = "development",
+    Group = "Developer",
     Args = {},
 }

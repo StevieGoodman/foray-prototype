@@ -2,7 +2,7 @@ return {
     Name = "Bypass",
     Aliases = { "Sudo" },
     Description = "Toggles developer bypasses for a player.",
-    Group = "development",
+    Group = "Developer",
     Args = {
         {
             Type = "player",

@@ -6,7 +6,7 @@ return {
     Name = "ProductionRate",
     Aliases = {},
     Description = "Sets the production rate of the selected node(s)",
-    Group = "development",
+    Group = "Developer",
     Args = {
         {
             Type = "number",

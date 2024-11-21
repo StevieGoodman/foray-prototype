@@ -6,7 +6,7 @@ return {
     Name = "Info",
     Aliases = {},
     Description = "Shows information about the selected node(s).",
-    Group = "development",
+    Group = "Developer",
     Args = {},
     Data = function(_)
         local selectedNode = Knit.GetController("Selection").SelectedNode:Get() or Knit.GetController("Selection").HoveredNode:Get()
