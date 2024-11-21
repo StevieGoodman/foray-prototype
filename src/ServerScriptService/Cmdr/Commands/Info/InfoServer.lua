@@ -2,6 +2,32 @@ local ServerScriptService = game:GetService("ServerScriptService")
 
 local NodeComponent = require(ServerScriptService.Component.Node)
 
+local function GetInfoString(node): string
+    local string =
+`Node {node.Id}\
+Owned by: {node.Owner:Get().Name}\
+Production rate: {node.ProductionRate:Get()} units/s`
+
+    local unitCounts = node._unitCounts
+    local teamsString = "\nTeams: "
+    for teamName, unitCount in unitCounts do
+        unitCount = unitCount:Get()
+        if unitCount == 0 then continue end
+        unitCount = math.round(unitCount * 10) / 10
+        teamsString ..= `{teamName} ({unitCount}), `
+    end
+    teamsString = teamsString:sub(1, -3)
+    string ..= teamsString
+
+    local directlyConnectedNodes = node:GetDirectlyConnectedNodes()
+    for index, connectedNode in directlyConnectedNodes do
+        directlyConnectedNodes[index] = connectedNode.Instance.Name
+    end
+    string ..= `\nConnected nodes: {table.concat(directlyConnectedNodes, ", ")}`
+
+    return string
+end
+
 return function(commandContext)
     local selectedNode = commandContext:GetData()
     if selectedNode == nil then
@@ -11,8 +37,5 @@ return function(commandContext)
     if node == nil then
         return "The selected instance is not a node. Was it just deleted?"
     end
-    return
-`Node {node.Id}\
-Owned by: {node.Owner:Get().Name}\
-Production rate: {node.ProductionRate:Get()} units/s`
+    return GetInfoString(node)
 end
