@@ -30,7 +30,7 @@ local Edge = Component.new {
 }
 
 function Edge:Construct()
-    self.Length = (self.Instance.Attachment0.Position - self.Instance.Attachment1.Position).Magnitude
+    self.Length = (self.Instance.Attachment0.WorldPosition - self.Instance.Attachment1.WorldPosition).Magnitude
 
     self._nodes = {
         NodeComponent:FromInstance(self.Instance.Attachment0.Parent),

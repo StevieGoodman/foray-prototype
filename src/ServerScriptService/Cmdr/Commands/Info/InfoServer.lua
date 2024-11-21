@@ -21,7 +21,8 @@ Production rate: {node.ProductionRate:Get()} units/s`
 
     local directlyConnectedNodes = node:GetDirectlyConnectedNodes()
     for index, connectedNode in directlyConnectedNodes do
-        directlyConnectedNodes[index] = connectedNode.Instance.Name
+        local length = node:GetEdgeTo(connectedNode).Length
+        directlyConnectedNodes[index] = `{connectedNode.Instance.Name} ({length} studs)`
     end
     string ..= `\nConnected nodes: {table.concat(directlyConnectedNodes, ", ")}`
 

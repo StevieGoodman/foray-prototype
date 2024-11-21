@@ -153,6 +153,13 @@ function Node:IsConnectedTo(node)
     return table.find(self:GetAllConnectedNodes(), node) ~= nil
 end
 
+function Node:GetEdgeTo(node)
+    for _, edge in self.Edges:Get() do
+        if edge:GetConnectedNode(self).Id ~= node.Id then continue end
+        return edge
+    end
+end
+
 function Node:GetPivot()
     return self.Instance:GetPivot()
 end
