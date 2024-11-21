@@ -31,7 +31,7 @@ end
 function Round:Construct()
     self.MapName = self.Instance.Name
     self.Id = Round.IdCounter
-    Round.IdCounter = Round.IdCounter + 1
+    Round.IdCounter += 1
     self.Instance.Name = `Round {self.Id} ({self.MapName})`
     self._folders = ValueObject.new({})
 end

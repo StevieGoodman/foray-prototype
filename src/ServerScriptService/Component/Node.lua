@@ -14,8 +14,6 @@ local RoundComponent = require(ServerScriptService.Component.Round)
 local TeamComponent = require(ServerScriptService.Component.Team)
 
 local STARTING_UNIT_COUNT = 25
-local COMBAT_MULTIPLIER = 0.1
-local MIN_CASUALITY_COUNT = 4
 
 local Node = Component.new {
     Tag = "Node",
@@ -73,7 +71,6 @@ end
 
 function Node:SteppedUpdate(deltaTime: number)
     self:_produceUnits(deltaTime)
-    self:_incrementBattle(deltaTime)
 end
 
 function Node:Stop()
@@ -226,6 +223,15 @@ function Node:_setUpUnitCount(team)
     self._trove:Add(self._unitCounts[team.Name].Changed:Connect(function(_: number)
         self:_updateUnitCounter()
         self:_updateOwner()
+
+        local teamsPresent = #TableUtil.Keys(TableUtil.Filter(self._unitCounts, function(unitCount, _)
+            return unitCount:Get() > 0
+        end))
+        if teamsPresent > 1 then
+            self.Instance:AddTag("Battle")
+        else
+            self.Instance:RemoveTag("Battle")
+        end
     end))
 end
 
@@ -278,26 +284,6 @@ function Node:_updateUnitCounter()
     end
     text = string.sub(text, 1, -4)
     self._instances.UnitCounter.Text = text
-end
-
-function Node:_incrementBattle(deltaTime: number)
-    local casualties = {}
-    for teamName, unitCount in self._unitCounts do
-        if unitCount:Get() == 0 then continue end
-        local enemyCount = 0
-        for enemyName, enemyUnitCount in self._unitCounts do
-            if enemyName == teamName then continue end
-            if enemyUnitCount:Get() == 0 then continue end
-            enemyCount += enemyUnitCount:Get()
-        end
-        casualties[teamName] = (casualties[teamName] or 0) + enemyCount * COMBAT_MULTIPLIER * deltaTime
-    end
-    for teamName, casualtyCount in casualties do
-        if 0 < casualtyCount and casualtyCount < MIN_CASUALITY_COUNT * deltaTime then
-            casualtyCount = MIN_CASUALITY_COUNT * deltaTime
-        end
-        self:TakeUnits(casualtyCount, TeamComponent.FromName(teamName), false)
-    end
 end
 
 return Node
