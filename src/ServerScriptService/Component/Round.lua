@@ -1,10 +1,13 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local ServerScriptService = game:GetService("ServerScriptService")
 local ServerStorage = game:GetService("ServerStorage")
 
 local Component = require(ReplicatedStorage.Packages.Component)
 local Trove = require(ReplicatedStorage.Packages.Trove)
 local ValueObject = require(ReplicatedStorage.Packages.ValueObject)
 local Waiter = require(ReplicatedStorage.Packages.Waiter)
+
+local TeamComponent = require(ServerScriptService.Component.Team)
 
 local GAME_END_THRESHOLD = 0.8
 
@@ -37,9 +40,20 @@ function Round:Construct()
     Round.IdCounter += 1
     self.Instance.Name = `Round {self.Id} ({self.MapName})`
 
+    self.NodeTallies = {}
+
     self._nodes = ValueObject.new({})
     self._folders = ValueObject.new({})
     self._trove = Trove.new()
+end
+
+function Round:Start()
+    for _, team in TeamComponent:GetAll() do
+        self.NodeTallies[team.Name] = ValueObject.new(0)
+        self._trove:Add(self.NodeTallies[team.Name].Changed:Connect(function()
+            self:_checkForRoundEnd()
+        end))
+    end
 end
 
 function Round:End()
@@ -73,27 +87,25 @@ function Round:RegisterNode(node)
     self._nodes:Set(nodes)
 
     self._trove:Add(node.Owner.Changed:Connect(function()
-        self:_checkForRoundEnd()
+        self:_updateNodeTallies()
     end))
 end
 
-function Round:GetNodeTallies(): {[string]: number}
+function Round:_updateNodeTallies()
     local nodeTallies = {}
     for _, node in self._nodes:Get() do
         nodeTallies[node.Owner:Get().Name] = (nodeTallies[node.Owner:Get().Name] or 0) + 1
     end
-    return nodeTallies
+    for teamName, count in nodeTallies do
+        self.NodeTallies[teamName]:Set(count)
+    end
 end
 
 function Round:GetOwnershipPercentages(): {[string]: number}
-    local nodeTallies = self:GetNodeTallies()
-    local totalNodes = 0
-    for _, count in nodeTallies do
-        totalNodes += count
-    end
+    local nodeTallies = self.NodeTallies
     local ownershipPercentages = {}
     for teamName, count in nodeTallies do
-        ownershipPercentages[teamName] = count / totalNodes
+        ownershipPercentages[teamName] = count:Get() / #self._nodes:Get()
     end
     return ownershipPercentages
 end
