@@ -3,10 +3,12 @@ local ServerScriptService = game:GetService("ServerScriptService")
 local ServerStorage = game:GetService("ServerStorage")
 
 local Component = require(ReplicatedStorage.Packages.Component)
+local Knit = require(ReplicatedStorage.Packages.Knit)
 local Trove = require(ReplicatedStorage.Packages.Trove)
 local ValueObject = require(ReplicatedStorage.Packages.ValueObject)
 local Waiter = require(ReplicatedStorage.Packages.Waiter)
 
+local NotificationService = Knit.GetService("Notification")
 local TeamComponent = require(ServerScriptService.Component.Team)
 
 local GAME_END_THRESHOLD = 0.8
@@ -115,7 +117,8 @@ function Round:_checkForRoundEnd()
     for teamName, percentage in ownershipPercentages do
         if teamName == "Neutral" then continue end
         if percentage < GAME_END_THRESHOLD then continue end
-        print(`{teamName} team has won the round!`)
+        local teamColorHex = TeamComponent.FromName(teamName).Color:ToHex()
+        NotificationService:NotifyAll(`Team <font color="#{teamColorHex}">{teamName}</font> has won the round!`)
         self:Reset()
     end
 end
