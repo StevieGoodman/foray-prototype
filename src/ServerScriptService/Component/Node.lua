@@ -58,6 +58,7 @@ function Node:Construct()
 
     self._trove = Trove.new()
     self:_setUpUnitCounts()
+    self.Round:RegisterNode(self)
 end
 
 function Node:Start()
