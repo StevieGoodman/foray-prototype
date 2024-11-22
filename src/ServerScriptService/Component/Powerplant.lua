@@ -28,7 +28,7 @@ NodeComponent.RegisterUpgradeType({
 })
 
 function Powerplant:Construct()
-    self.ProductionRateBoost = ValueObject.new(PRODUCTION_RATE_BOOST)
+    self.ProductionRateBoost = ValueObject.Value.new(PRODUCTION_RATE_BOOST)
 
     self._trove = Trove.new()
     self._trove:Add(self.ProductionRateBoost)

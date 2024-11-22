@@ -33,10 +33,10 @@ function UnitGroup.new(startNode, endNode, unitCount)
 end
 
 function UnitGroup:Construct()
-    self.UnitCount = ValueObject.new(nil)
-    self.MoveSpeed = ValueObject.new(1)
-    self.Path = ValueObject.new(nil)
-    self.Owner = ValueObject.new(nil)
+    self.UnitCount = ValueObject.Value.new(nil)
+    self.MoveSpeed = ValueObject.Value.new(1)
+    self.Path = ValueObject.Value.new(nil)
+    self.Owner = ValueObject.Value.new(nil)
 
     self._trove = Trove.new()
     self._trove:Add(self.Path)

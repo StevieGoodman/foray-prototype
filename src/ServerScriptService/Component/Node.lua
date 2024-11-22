@@ -61,11 +61,11 @@ function Node:Construct()
     self.Id = Node.IdCounter
     Node.IdCounter += 1
     self.Instance.Name = `Node {self.Id}`
-    self.Edges = ValueObject.new({})
-    self.Owner = ValueObject.new(TeamComponent.FromName(self.Instance:GetAttribute("DefaultOwner") or "Neutral"))
+    self.Edges = ValueObject.Value.new({})
+    self.Owner = ValueObject.Value.new(TeamComponent.FromName(self.Instance:GetAttribute("DefaultOwner") or "Neutral"))
     self.Round = self._components.Round
-    self.UpgradeType = ValueObject.new(nil)
-    self.UpgradeComponent = ValueObject.new(nil)
+    self.UpgradeType = ValueObject.Value.new(nil)
+    self.UpgradeComponent = ValueObject.Value.new(nil)
 
     self._comm = Comm.ServerComm.new(self.Instance, self.Tag)
     self._comm:BindFunction("SendUnitsTo", function(player, nodeId, unitCount)
@@ -275,7 +275,7 @@ end
 
 function Node:_setUpUnitCount(team)
     if self._unitCounts[team.Name] ~= nil then return end
-    self._unitCounts[team.Name] = ValueObject.new(0)
+    self._unitCounts[team.Name] = ValueObject.Value.new(0)
     self._trove:Add(self._unitCounts[team.Name])
 
     self._trove:Add(self._unitCounts[team.Name].Changed:Connect(function(_: number)

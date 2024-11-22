@@ -27,7 +27,7 @@ function Node:Construct()
     self._properties.Id:OnReady():await()
 
     self.Id = self._properties.Id:Get()
-    self.Owner = ValueObject.new(self._properties.Owner:Get())
+    self.Owner = ValueObject.Value.new(self._properties.Owner:Get())
 
     self._trove = Trove.new()
     self._trove:Add(self._comm)

@@ -26,7 +26,7 @@ end
 function Team:Construct()
     self.Team = self.Instance :: Team
     self.Name = self.Team.Name
-    self.Members = ValueObject.new({})
+    self.Members = ValueObject.Value.new({})
     self.Color = self.Team.TeamColor.Color
 
     self._trove = Trove.new()

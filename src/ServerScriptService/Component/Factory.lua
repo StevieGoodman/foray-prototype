@@ -28,7 +28,7 @@ NodeComponent.RegisterUpgradeType({
 })
 
 function Factory:Construct()
-    self.ProductionRate = ValueObject.new(DEFAULT_PRODUCTION_RATE)
+    self.ProductionRate = ValueObject.Value.new(DEFAULT_PRODUCTION_RATE)
     self._trove = Trove.new()
     self._trove:Add(self.ProductionRate)
 end

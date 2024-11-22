@@ -19,8 +19,8 @@ local SelectionController = Knit.CreateController {
 }
 
 function SelectionController:KnitInit()
-    self.SelectedNode = ValueObject.new(nil)
-    self.HoveredNode = ValueObject.new(nil)
+    self.SelectedNode = ValueObject.Value.new(nil)
+    self.HoveredNode = ValueObject.Value.new(nil)
 
     self._selectedHighlightTrove = Trove.new()
     self._hoveredHighlightTrove = Trove.new()

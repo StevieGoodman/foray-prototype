@@ -44,14 +44,14 @@ function Round:Construct()
 
     self.NodeTallies = {}
 
-    self._nodes = ValueObject.new({})
-    self._folders = ValueObject.new({})
+    self._nodes = ValueObject.Value.new({})
+    self._folders = ValueObject.Value.new({})
     self._trove = Trove.new()
 end
 
 function Round:Start()
     for _, team in TeamComponent:GetAll() do
-        self.NodeTallies[team.Name] = ValueObject.new(0)
+        self.NodeTallies[team.Name] = ValueObject.Value.new(0)
         self._trove:Add(self.NodeTallies[team.Name].Changed:Connect(function()
             self:_checkForRoundEnd(team)
         end))
