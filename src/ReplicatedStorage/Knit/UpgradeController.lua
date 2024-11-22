@@ -22,9 +22,10 @@ function UpgradeController:KnitStart()
         end,
         false,
         Enum.KeyCode.One,
-        Enum.KeyCode.Two,
-        Enum.KeyCode.Three,
-        Enum.KeyCode.Four)
+        Enum.KeyCode.Two--,
+        --Enum.KeyCode.Three,
+        --Enum.KeyCode.Four
+        )
 end
 
 function UpgradeController:_upgrade(upgradeName: string)
