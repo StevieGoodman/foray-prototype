@@ -19,13 +19,11 @@ local SelectionController = Knit.CreateController {
 }
 
 function SelectionController:KnitInit()
-    self.SelectedNode = ValueObject.Value.new(nil)
+    self.SelectedNodes = ValueObject.Table.new()
     self.HoveredNode = ValueObject.Value.new(nil)
 
-    self._selectedHighlightTrove = Trove.new()
-    self._hoveredHighlightTrove = Trove.new()
-
-    self._selectedEventTrove = Trove.new()
+    self._hoveredTrove = Trove.new()
+    self._selectedTroves = {}
 end
 
 function SelectionController:KnitStart()
@@ -37,12 +35,19 @@ function SelectionController:KnitStart()
         self:_select()
     end, false, SELECT_KEY)
 
-    self.SelectedNode.Changed:Connect(function(selectedNode)
-        self:_highlightNode(selectedNode, self._selectedHighlightTrove)
-        self:_bindSelectedNodeEvents(selectedNode)
+    self.SelectedNodes.Inserted:Connect(function(newSelectedNode)
+        local newTrove = Trove.new()
+        self._selectedTroves[newSelectedNode.Id] = newTrove
+        self:_highlightNode(newSelectedNode, newTrove) -- Do not reorder this line! It cleans the trove passed into it!
+        self:_bindSelectedNodeEvents(newSelectedNode, newTrove)
+    end)
+    self.SelectedNodes.Removed:Connect(function(oldSelectedNode)
+        print("Deselected", oldSelectedNode)
+        self._selectedTroves[oldSelectedNode.Id]:Clean()
+        self._selectedTroves[oldSelectedNode.Id] = nil
     end)
     self.HoveredNode.Changed:Connect(function(hoveredNode)
-        self:_highlightNode(hoveredNode, self._hoveredHighlightTrove)
+        self:_highlightNode(hoveredNode, self._hoveredTrove)
     end)
 end
 
@@ -72,37 +77,47 @@ function SelectionController:_select()
     and (self.HoveredNode:Get() == nil
     or self.HoveredNode:Get().Owner:Get() == nil
     or self.HoveredNode:Get().Owner:Get().Name ~= Players.LocalPlayer.Team.Name) then
-        self.SelectedNode:Set(nil)
+        self.SelectedNodes:Clear()
     else
-        self.SelectedNode:Set(self.HoveredNode:Get())
+        local append = UserInputService:IsKeyDown(Enum.KeyCode.LeftShift)
+        if append then
+            self.SelectedNodes:Insert(self.HoveredNode:Get())
+        else
+            self.SelectedNodes:Set({self.HoveredNode:Get()})
+        end
     end
 end
 
 function SelectionController:_highlightNode(node, trove)
     trove:Clean()
     if node == nil then return end
-    if trove == self._hoveredHighlightTrove and
-        self.SelectedNode:Get() ~= nil and
-        node.Id == self.SelectedNode:Get().Id
-        then return end
+    if trove == self._hoveredTrove and self:IsSelected(node) then return end
     local highlight = Instance.new("Highlight")
-    highlight.FillTransparency = if trove == self._selectedHighlightTrove then 0.75 else 1
-    highlight.OutlineTransparency = if trove == self._selectedHighlightTrove then 0 else 0.5
+    highlight.FillTransparency = if trove == self._hoveredTrove then 1 else 0.75
+    highlight.OutlineTransparency = if trove == self._hoveredTrove then 0.5 else 0
     highlight.FillColor = Color3.new(1, 1, 1)
     highlight.Parent = node.Instance
     trove:Add(highlight)
 end
 
-function SelectionController:_bindSelectedNodeEvents(node)
-    self._selectedEventTrove:Clean()
+function SelectionController:IsSelected(node)
+    for _, selectedNode in self.SelectedNodes do
+        if selectedNode.Id == node.Id then return true end
+    end
+    return false
+end
+
+function SelectionController:_bindSelectedNodeEvents(node, trove)
     if node == nil then return end
-    self._selectedEventTrove:Add(node.Owner.Changed:Connect(function(newOwner)
+    trove:Add(node.Owner.Changed:Connect(function(newOwner)
         if newOwner:IsMember() then return end
-        self.SelectedNode:Set(nil)
+        local index = self.SelectedNodes:Find(node)
+        self.SelectedNodes:Remove(index)
     end))
-    self._selectedEventTrove:Add(Players.LocalPlayer:GetPropertyChangedSignal("Team"):Connect(function()
+    trove:Add(Players.LocalPlayer:GetPropertyChangedSignal("Team"):Connect(function()
         if node.Owner:Get():IsMember() then return end
-        self.SelectedNode:Set(nil)
+        local index = self.SelectedNodes:Find(node)
+        self.SelectedNodes:Remove(index)
     end))
 end
 

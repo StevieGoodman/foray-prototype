@@ -28,10 +28,12 @@ function MovementController:KnitStart()
 end
 
 function MovementController:_trySendUnits(unitCount: number)
-    local selectedNode = SelectionController.SelectedNode:Get()
+    local selectedNodes = SelectionController.SelectedNodes:Get()
     local hoveredNode = SelectionController.HoveredNode:Get()
-    if selectedNode == nil or hoveredNode == nil or selectedNode.Id == hoveredNode.Id then return end
-    selectedNode.SendUnitsTo(hoveredNode.Id, unitCount)
+    if #selectedNodes == 0 or hoveredNode == nil or SelectionController.SelectedNodes:Has(hoveredNode) then return end
+    for _, selectedNode in selectedNodes do
+        selectedNode.SendUnitsTo(hoveredNode.Id, unitCount)
+    end
 end
 
 function MovementController:_keyCodeToUnitCount(keyCode)

@@ -21,7 +21,7 @@ return {
         }
     },
     Data = function(_)
-        local selectedNode = Knit.GetController("Selection").SelectedNode:Get() or Knit.GetController("Selection").HoveredNode:Get()
+        local selectedNode = Knit.GetController("Selection").HoveredNode:Get()
         return if selectedNode == nil then nil else selectedNode.Instance
     end
 }
