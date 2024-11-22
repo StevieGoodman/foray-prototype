@@ -9,7 +9,8 @@ local ValueObject = require(ReplicatedStorage.Packages.ValueObject)
 
 local NodeComponent = require(ServerScriptService.Component.Node)
 
-local DEFAULT_PRODUCTION_RATE = 4
+local DEFAULT_PRODUCTION_RATE = 10
+local UPGRADE_COST = 500
 
 local Factory = Component.new {
     Tag = "Factory",
@@ -19,12 +20,16 @@ local Factory = Component.new {
     },
 }
 
-function Factory:Construct()
-    self._trove = Trove.new()
-end
+NodeComponent.RegisterUpgradeType({
+    Name = "Factory",
+    Component = Factory,
+    Cost = UPGRADE_COST,
+})
 
-function Factory:Start()
+function Factory:Construct()
     self.ProductionRate = ValueObject.new(DEFAULT_PRODUCTION_RATE)
+    self._trove = Trove.new()
+    self._trove:Add(self.ProductionRate)
 end
 
 function Factory:SteppedUpdate(deltaTime: number)
@@ -33,6 +38,13 @@ end
 
 function Factory:Stop()
     self._trove:Clean()
+end
+
+function Factory:BoostProduction(productionRate: number): () -> nil
+    self.ProductionRate:Set(self.ProductionRate:Get() + productionRate)
+    return function()
+        self.ProductionRate:Set(self.ProductionRate:Get() - productionRate)
+    end
 end
 
 function Factory:_produceUnits(deltaTime: number)

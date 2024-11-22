@@ -13,12 +13,18 @@ local UnitGroupComponent = require(ServerScriptService.Component.UnitGroup)
 local RoundComponent = require(ServerScriptService.Component.Round)
 local TeamComponent = require(ServerScriptService.Component.Team)
 
-local STARTING_UNIT_COUNT = 25
-local UPGRADES = {
-    Factory = {
-        Tag = "Factory",
-        Cost = 500,
-    }
+local STARTING_UNIT_COUNTS = {
+    Neutral = 25,
+    Red = 1_000,
+    Blue = 1_000,
+    Green = 1_000,
+    Yellow = 1_000,
+}
+
+export type UpgradeType = {
+    Name: string,
+    Component: table,
+    Cost: number,
 }
 
 local Node = Component.new {
@@ -32,6 +38,11 @@ local Node = Component.new {
 }
 
 Node.IdCounter = 1
+Node.UpgradeTypes = {}
+
+function Node.RegisterUpgradeType(upgradeType: UpgradeType)
+    Node.UpgradeTypes[upgradeType.Name] = upgradeType
+end
 
 function Node.FromId(id: number)
     local nodes = Node:GetAll()
@@ -46,8 +57,10 @@ function Node:Construct()
     Node.IdCounter += 1
     self.Instance.Name = `Node {self.Id}`
     self.Edges = ValueObject.new({})
-    self.Round = self._components.Round
     self.Owner = ValueObject.new(TeamComponent.FromName(self.Instance:GetAttribute("DefaultOwner") or "Neutral"))
+    self.Round = self._components.Round
+    self.UpgradeName = ValueObject.new(nil)
+    self.UpgradeComponent = ValueObject.new(nil)
 
     self._comm = Comm.ServerComm.new(self.Instance, self.Tag)
     self._comm:BindFunction("SendUnitsTo", function(player, nodeId, unitCount)
@@ -73,7 +86,7 @@ function Node:Construct()
 end
 
 function Node:Start()
-    self:GiveUnits(STARTING_UNIT_COUNT, self.Owner:Get())
+    self:GiveUnits(STARTING_UNIT_COUNTS[self.Owner:Get().Name], self.Owner:Get())
     self:_updateColor()
     self._trove:Add(self.Owner.Changed:Connect(function(newOwner)
         self._properties.Owner:Set(if newOwner ~= nil then newOwner.Name else nil)
@@ -211,20 +224,28 @@ function Node:GiveUnits(amount: number, team): number
 end
 
 function Node:RemoveUpgrades()
-    for _, upgrade in UPGRADES do
-        self.Instance:RemoveTag(upgrade.Tag)
+    for _, upgrade in Node.UpgradeTypes do
+        self.Instance:RemoveTag(upgrade.Component.Tag)
     end
+    self.UpgradeName:Set(nil)
 end
 
 function Node:Upgrade(upgradeName: string)
-    local upgrade = UPGRADES[upgradeName]
+    local upgrade = Node.UpgradeTypes[upgradeName]
     assert(upgrade ~= nil, `Upgrade "{upgradeName}" is not a valid upgrade name.`)
-    if self.Instance:HasTag(upgrade.Tag) then return end
+    local upgradeComponent = Node.UpgradeTypes[upgradeName].Component
+    if self.Instance:HasTag(upgrade.Component.Tag) then return end
     local cost = upgrade.Cost
     if self:GetUnitCount(self.Owner:Get()):Get() <= cost then return end
     self:TakeUnits(cost, self.Owner:Get(), false)
     self:RemoveUpgrades()
-    self.Instance:AddTag(UPGRADES[upgradeName].Tag)
+    self.Instance:AddTag(upgradeComponent.Tag)
+    self.UpgradeName:Set(upgradeName)
+    upgradeComponent:WaitForInstance(self.Instance)
+    :andThen(function(component)
+        if self.UpgradeName:Get() ~= upgradeName then return end
+        self.UpgradeComponent:Set(component)
+    end)
 end
 
 function Node:_setUpUnitCounts()
