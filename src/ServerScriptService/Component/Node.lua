@@ -13,6 +13,7 @@ local UnitGroupComponent = require(ServerScriptService.Component.UnitGroup)
 local RoundComponent = require(ServerScriptService.Component.Round)
 local TeamComponent = require(ServerScriptService.Component.Team)
 
+local EMPTY_MESH_ID = 75417688623420
 local STARTING_UNIT_COUNTS = {
     Neutral = 25,
     Red = 1_000,
@@ -25,6 +26,7 @@ export type UpgradeType = {
     Name: string,
     Component: table,
     Cost: number,
+    MeshId: number,
 }
 
 local Node = Component.new {
@@ -42,6 +44,9 @@ Node.UpgradeTypes = {}
 
 function Node.RegisterUpgradeType(upgradeType: UpgradeType)
     Node.UpgradeTypes[upgradeType.Name] = upgradeType
+    if upgradeType.MeshId == nil then
+        warn(`Upgrade type "{upgradeType.Name}" does not have a MeshId.`)
+    end
 end
 
 function Node.FromId(id: number)
@@ -59,7 +64,7 @@ function Node:Construct()
     self.Edges = ValueObject.new({})
     self.Owner = ValueObject.new(TeamComponent.FromName(self.Instance:GetAttribute("DefaultOwner") or "Neutral"))
     self.Round = self._components.Round
-    self.UpgradeName = ValueObject.new(nil)
+    self.UpgradeType = ValueObject.new(nil)
     self.UpgradeComponent = ValueObject.new(nil)
 
     self._comm = Comm.ServerComm.new(self.Instance, self.Tag)
@@ -91,6 +96,12 @@ function Node:Start()
     self._trove:Add(self.Owner.Changed:Connect(function(newOwner)
         self._properties.Owner:Set(if newOwner ~= nil then newOwner.Name else nil)
         self:_updateColor()
+    end))
+    self._trove:Add(self.UpgradeType.Changed:Connect(function(newUpgradeType)
+        if newUpgradeType == nil then return end
+        local mesh = Waiter.getFirst(Waiter.descendants(self.Instance), Waiter.matchClassName("SpecialMesh"))
+        if mesh == nil then return end
+        mesh.MeshId = `rbxassetid://{newUpgradeType.MeshId or EMPTY_MESH_ID}`
     end))
 end
 
@@ -227,7 +238,8 @@ function Node:RemoveUpgrades()
     for _, upgrade in Node.UpgradeTypes do
         self.Instance:RemoveTag(upgrade.Component.Tag)
     end
-    self.UpgradeName:Set(nil)
+    self.UpgradeType:Set(nil)
+    self.UpgradeComponent:Set(nil)
 end
 
 function Node:Upgrade(upgradeName: string)
@@ -240,10 +252,10 @@ function Node:Upgrade(upgradeName: string)
     self:TakeUnits(cost, self.Owner:Get(), false)
     self:RemoveUpgrades()
     self.Instance:AddTag(upgradeComponent.Tag)
-    self.UpgradeName:Set(upgradeName)
+    self.UpgradeType:Set(upgrade)
     upgradeComponent:WaitForInstance(self.Instance)
     :andThen(function(component)
-        if self.UpgradeName:Get() ~= upgradeName then return end
+        if self.UpgradeType:Get() ~= nil and self.UpgradeType:Get().Name ~= upgradeName then return end
         self.UpgradeComponent:Set(component)
     end)
 end

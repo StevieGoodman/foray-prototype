@@ -24,6 +24,7 @@ NodeComponent.RegisterUpgradeType({
     Name = "Factory",
     Component = Factory,
     Cost = UPGRADE_COST,
+    MeshId = 119946346001868,
 })
 
 function Factory:Construct()
