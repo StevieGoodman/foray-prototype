@@ -53,7 +53,7 @@ function Round:Start()
     for _, team in TeamComponent:GetAll() do
         self.NodeTallies[team.Name] = ValueObject.new(0)
         self._trove:Add(self.NodeTallies[team.Name].Changed:Connect(function()
-            self:_checkForRoundEnd()
+            self:_checkForRoundEnd(team)
         end))
     end
 end
@@ -87,7 +87,6 @@ function Round:RegisterNode(node)
 
     table.insert(nodes, node)
     self._nodes:Set(nodes)
-
     self._trove:Add(node.Owner.Changed:Connect(function()
         self:_updateNodeTallies()
     end))
@@ -112,15 +111,14 @@ function Round:GetOwnershipPercentages(): {[string]: number}
     return ownershipPercentages
 end
 
-function Round:_checkForRoundEnd()
+function Round:_checkForRoundEnd(team)
+    if team.Name == "Neutral" then return end
     local ownershipPercentages = self:GetOwnershipPercentages()
-    for teamName, percentage in ownershipPercentages do
-        if teamName == "Neutral" then continue end
-        if percentage < GAME_END_THRESHOLD then continue end
-        local teamColorHex = TeamComponent.FromName(teamName).Color:ToHex()
-        NotificationService:NotifyAll(`Team <font color="#{teamColorHex}">{teamName}</font> has won the round!`)
-        self:Reset()
-    end
+    local ownershipPercentage = ownershipPercentages[team.Name]
+    if ownershipPercentage < GAME_END_THRESHOLD then return end
+    local teamColorHex = TeamComponent.FromName(team.Name).Color:ToHex()
+    NotificationService:NotifyAll(`Team <font color="#{teamColorHex}">{team.Name}</font> has won the round!`)
+    self:Reset()
 end
 
 Round.new("Testing Map")
