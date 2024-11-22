@@ -14,6 +14,12 @@ local RoundComponent = require(ServerScriptService.Component.Round)
 local TeamComponent = require(ServerScriptService.Component.Team)
 
 local STARTING_UNIT_COUNT = 25
+local UPGRADES = {
+    Factory = {
+        Tag = "Factory",
+        Cost = 500,
+    }
+}
 
 local Node = Component.new {
     Tag = "Node",
@@ -39,7 +45,6 @@ function Node:Construct()
     self.Id = Node.IdCounter
     Node.IdCounter += 1
     self.Instance.Name = `Node {self.Id}`
-    self.ProductionRate = ValueObject.new(1)
     self.Edges = ValueObject.new({})
     self.Round = self._components.Round
     self.Owner = ValueObject.new(TeamComponent.FromName(self.Instance:GetAttribute("DefaultOwner") or "Neutral"))
@@ -51,6 +56,12 @@ function Node:Construct()
         if node == nil then return end
         self:SendUnitsTo(node, unitCount)
     end)
+    self._comm:BindFunction("Upgrade", function(player, upgradeName)
+        if upgradeName == nil then return end
+        if not self:OwnedBy(player) and not player:HasTag("BypassesEnabled") then return end
+        self:Upgrade(upgradeName)
+    end)
+
     self._properties = {
         Id = self._comm:CreateProperty("Id", self.Id),
         Owner = self._comm:CreateProperty("Owner", if self.Owner:Get() == nil then nil else self.Owner:Get().Name),
@@ -68,10 +79,6 @@ function Node:Start()
         self._properties.Owner:Set(if newOwner ~= nil then newOwner.Name else nil)
         self:_updateColor()
     end))
-end
-
-function Node:SteppedUpdate(deltaTime: number)
-    self:_produceUnits(deltaTime)
 end
 
 function Node:Stop()
@@ -203,6 +210,23 @@ function Node:GiveUnits(amount: number, team): number
     return amount
 end
 
+function Node:RemoveUpgrades()
+    for _, upgrade in UPGRADES do
+        self.Instance:RemoveTag(upgrade.Tag)
+    end
+end
+
+function Node:Upgrade(upgradeName: string)
+    local upgrade = UPGRADES[upgradeName]
+    assert(upgrade ~= nil, `Upgrade "{upgradeName}" is not a valid upgrade name.`)
+    if self.Instance:HasTag(upgrade.Tag) then return end
+    local cost = upgrade.Cost
+    if self:GetUnitCount(self.Owner:Get()):Get() <= cost then return end
+    self:TakeUnits(cost, self.Owner:Get(), false)
+    self:RemoveUpgrades()
+    self.Instance:AddTag(UPGRADES[upgradeName].Tag)
+end
+
 function Node:_setUpUnitCounts()
     self._unitCounts = {}
     for _, team in TeamComponent.Teams:Get() do
@@ -241,20 +265,6 @@ function Node:_updateColor()
         if self.Owner:Get() == nil
         then BrickColor.new("Dark stone grey").Color
         else self.Owner:Get().Color
-end
-
-function Node:_produceUnits(deltaTime: number)
-    local teamsPresent = #TableUtil.Keys(TableUtil.Filter(self._unitCounts, function(unitCount, _)
-        return unitCount:Get() > 0
-    end))
-    if teamsPresent > 1 then return end
-    local newUnits = self.ProductionRate:Get() * deltaTime
-    local isNeutral = self.Owner:Get().Name == "Neutral"
-    if isNeutral then
-        newUnits /= 2
-    end
-    if self.Owner:Get() == nil then return end
-    self:GiveUnits(newUnits, self.Owner:Get())
 end
 
 function Node:_updateOwner()

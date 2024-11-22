@@ -19,6 +19,7 @@ local Node = Component.new {
 function Node:Construct()
     self._comm = Comm.ClientComm.new(self.Instance, true, self.Tag)
     self.SendUnitsTo = self._comm:GetFunction("SendUnitsTo")
+    self.Upgrade = self._comm:GetFunction("Upgrade")
     self._properties = {
         Id = self._comm:GetProperty("Id"),
         Owner = self._comm:GetProperty("Owner"),
