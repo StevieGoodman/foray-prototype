@@ -194,6 +194,7 @@ function Node:GetPivot()
 end
 
 function Node:SendUnitsTo(node, unitCount: number)
+    if self.Id == node.Id then return end
     unitCount = self:TakeUnits(unitCount, self.Owner:Get(), true)
     if unitCount <= 1 then
         self:GiveUnits(unitCount, self.Owner:Get())
