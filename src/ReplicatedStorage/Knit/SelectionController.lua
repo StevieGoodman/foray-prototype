@@ -11,6 +11,7 @@ local ValueObject = require(ReplicatedStorage.Packages.ValueObject)
 local NodeComponent = require(ReplicatedStorage.Component.Node)
 
 local CAMERA = workspace.CurrentCamera
+local SELECT_RADIUS_THRESHOLD = 1
 local SELECTION_DOT_PRODUCT_THRESHOLD = 0.99
 local SELECT_KEY = Enum.UserInputType.MouseButton1
 
@@ -28,11 +29,11 @@ end
 
 function SelectionController:KnitStart()
     RunService.RenderStepped:Connect(function()
-        self:CalculateHoveredNode()
+        self:_updateHoveredNode()
     end)
-    ContextActionService:BindAction("Select", function(_, inputState, _)
+    ContextActionService:BindAction("StartSelection", function(_, inputState, _)
         if inputState ~= Enum.UserInputState.Begin then return end
-        self:_select()
+        self:_startSelection()
     end, false, SELECT_KEY)
 
     self.SelectedNodes.Inserted:Connect(function(newSelectedNode)
@@ -42,7 +43,6 @@ function SelectionController:KnitStart()
         self:_bindSelectedNodeEvents(newSelectedNode, newTrove)
     end)
     self.SelectedNodes.Removed:Connect(function(oldSelectedNode)
-        print("Deselected", oldSelectedNode)
         self._selectedTroves[oldSelectedNode.Id]:Clean()
         self._selectedTroves[oldSelectedNode.Id] = nil
     end)
@@ -51,10 +51,15 @@ function SelectionController:KnitStart()
     end)
 end
 
-function SelectionController:CalculateHoveredNode()
-    local cursorPosition = UserInputService:GetMouseLocation()
-    local ray = CAMERA:ViewportPointToRay(cursorPosition.X, cursorPosition.Y)
+function SelectionController:IsSelected(node)
+    for _, selectedNode in self.SelectedNodes do
+        if selectedNode.Id == node.Id then return true end
+    end
+    return false
+end
 
+function SelectionController:_updateHoveredNode()
+    local ray = self:_getCursorRay()
     local bestNode = nil
     local nodes = NodeComponent:GetAll()
     for _, node in nodes do
@@ -72,20 +77,65 @@ function SelectionController:CalculateHoveredNode()
     self.HoveredNode:Set(if bestNode == nil then nil else bestNode.Node)
 end
 
-function SelectionController:_select()
-    if not Players.LocalPlayer:HasTag("BypassesEnabled")
-    and (self.HoveredNode:Get() == nil
-    or self.HoveredNode:Get().Owner:Get() == nil
-    or self.HoveredNode:Get().Owner:Get().Name ~= Players.LocalPlayer.Team.Name) then
-        self.SelectedNodes:Clear()
+function SelectionController:_startSelection()
+    local initialPosition = self:_getCursorWorldPosition(self:_getCursorRay())
+    if initialPosition == nil then return end
+
+    local partTrove = Trove.new()
+    local renderSteppedConnection = RunService.RenderStepped:Connect(function()
+        partTrove:Clean()
+        local currentPosition = self:_getCursorWorldPosition(self:_getCursorRay())
+        if currentPosition == nil or currentPosition.Y ~= 0 then return end
+        local radius = (currentPosition - initialPosition).Magnitude
+        if radius < SELECT_RADIUS_THRESHOLD then return end
+        self:_createSelectionCircle(initialPosition, radius, partTrove)
+    end)
+    UserInputService.InputEnded:Wait()
+    partTrove:Clean()
+
+    renderSteppedConnection:Disconnect()
+    local endingPosition = self:_getCursorWorldPosition(self:_getCursorRay())
+    if endingPosition == nil then return end
+    local radius = (endingPosition - initialPosition).Magnitude
+
+    local append = UserInputService:IsKeyDown(Enum.KeyCode.LeftShift)
+    if radius < SELECT_RADIUS_THRESHOLD then
+        self:_trySelect(self.HoveredNode:Get(), append)
     else
-        local append = UserInputService:IsKeyDown(Enum.KeyCode.LeftShift)
-        if append then
-            self.SelectedNodes:Insert(self.HoveredNode:Get())
-        else
-            self.SelectedNodes:Set({self.HoveredNode:Get()})
+        if not append then
+            self.SelectedNodes:Clear()
+        end
+        local nodes = NodeComponent:GetAll()
+        for _, node in nodes do
+            local distance = (node:GetPivot().Position - initialPosition).Magnitude
+            if distance > radius then continue end
+            self:_trySelect(node, true)
         end
     end
+end
+
+function SelectionController:_trySelect(node, append: boolean?)
+    if not append then
+        self.SelectedNodes:Clear()
+    end
+    if self.SelectedNodes:Has(node) then return end
+    local hasPermissionToSelect = node ~= nil and node.Owner:Get() ~= nil and node.Owner:Get().Name == Players.LocalPlayer.Team.Name
+    if Players.LocalPlayer:HasTag("BypassesEnabled") or hasPermissionToSelect then
+        self.SelectedNodes:Insert(node)
+    end
+end
+
+function SelectionController:_createSelectionCircle(origin: Vector3, radius: number, trove)
+    local part = Instance.new("Part")
+    part.Anchored = true
+    part.CanCollide = false
+    part.Size = Vector3.new(0.1, radius * 2, radius * 2)
+    part:PivotTo(CFrame.new(origin) * CFrame.Angles(0, 0, math.rad(90)) * CFrame.new(0, 0, 0.05))
+    part.Transparency = 0.75
+    part.BrickColor = BrickColor.new("Institutional white")
+    part.Shape = Enum.PartType.Cylinder
+    part.Parent = workspace
+    trove:Add(part)
 end
 
 function SelectionController:_highlightNode(node, trove)
@@ -100,13 +150,6 @@ function SelectionController:_highlightNode(node, trove)
     trove:Add(highlight)
 end
 
-function SelectionController:IsSelected(node)
-    for _, selectedNode in self.SelectedNodes do
-        if selectedNode.Id == node.Id then return true end
-    end
-    return false
-end
-
 function SelectionController:_bindSelectedNodeEvents(node, trove)
     if node == nil then return end
     trove:Add(node.Owner.Changed:Connect(function(newOwner)
@@ -119,6 +162,20 @@ function SelectionController:_bindSelectedNodeEvents(node, trove)
         local index = self.SelectedNodes:Find(node)
         self.SelectedNodes:Remove(index)
     end))
+end
+
+function SelectionController:_getCursorRay(): Ray
+    local cursorPosition = UserInputService:GetMouseLocation()
+    return CAMERA:ViewportPointToRay(cursorPosition.X, cursorPosition.Y)
+end
+
+function SelectionController:_getCursorWorldPosition(ray: Ray): Vector3?
+    if ray.Direction.Y == 0 then return nil end -- Prevent division by zero (parallel)
+    local t = ray.Origin.Y / -ray.Direction.Y -- t = how many rays to travel to reach the ground
+    if t < 0 then return nil end -- Prevent selection below the ground
+    local intersectionPoint = ray.Origin + ray.Direction * t
+    intersectionPoint = Vector3.new(intersectionPoint.X, 0, intersectionPoint.Z)
+    return intersectionPoint
 end
 
 return SelectionController
