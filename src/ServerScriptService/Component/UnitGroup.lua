@@ -6,6 +6,8 @@ local Trove = require(ReplicatedStorage.Packages.Trove)
 local ValueObject = require(ReplicatedStorage.Packages.ValueObject)
 local Waiter = require(ReplicatedStorage.Packages.Waiter)
 
+local COLLISION_DISTANCE = 0.25
+local QUERY_COLLISION_GROUP = "Unit Group Query"
 local TEMPLATE_UNIT_GROUP = Waiter.getFirst(Waiter.descendants(ReplicatedStorage.Assets), Waiter.matchTag("UnitGroup"))
 assert(TEMPLATE_UNIT_GROUP ~= nil, "UnitGroup template not found")
 
@@ -27,6 +29,7 @@ function UnitGroup.new(startNode, endNode, unitCount)
     assert(success, result)
     self = result
     self.Path:Set(path)
+    self.PreviousNode:Set(startNode)
     self.UnitCount:Set(unitCount)
     self.Owner:Set(startNode.Owner:Get())
     self:_pivotTo(startNode:GetPivot())
@@ -36,6 +39,7 @@ function UnitGroup:Construct()
     self.UnitCount = ValueObject.Value.new(nil)
     self.MoveSpeed = ValueObject.Value.new(1)
     self.Path = ValueObject.Value.new(nil)
+    self.PreviousNode = ValueObject.Value.new(nil)
     self.Owner = ValueObject.Value.new(nil)
 
     self._trove = Trove.new()
@@ -59,6 +63,7 @@ end
 
 function UnitGroup:SteppedUpdate(deltaTime: number)
     self:_moveTowardsNextNode(deltaTime)
+    self:_queryForUnitGroups()
 end
 
 function UnitGroup:Stop()
@@ -67,6 +72,12 @@ end
 
 function UnitGroup:GetPivot()
     return self.Instance:GetPivot()
+end
+
+function UnitGroup:Retreat()
+    local newPreviousNode = self.Path:Get()[1]
+    self.Path:Set({self.PreviousNode:Get()})
+    self.PreviousNode:Set(newPreviousNode)
 end
 
 function UnitGroup:_moveTowardsNextNode(deltaTime: number)
@@ -79,7 +90,8 @@ function UnitGroup:_moveTowardsNextNode(deltaTime: number)
     local remainingDistance = distance - distanceTravelled
     if remainingDistance <= 0 then
         local path = self.Path:Get()
-        table.remove(path, 1)
+        local previousNode = table.remove(path, 1)
+        self.PreviousNode:Set(previousNode)
         self.Path:Set(path)
         if #path ~= 0 and nextNode.Owner:Get().Name == self.Owner:Get().Name then return end
         self:_enterNode(nextNode)
@@ -103,6 +115,37 @@ function UnitGroup:_updateColor()
         if self.Owner:Get() == nil
         then BrickColor.new("Dark stone grey").Color
         else self.Owner:Get().Color
+end
+
+function UnitGroup:_getDistanceToNextNode()
+    return (self.Path:Get()[1]:GetPivot().Position - self:GetPivot().Position).Magnitude
+end
+
+function UnitGroup:_onCollision(otherUnitGroup)
+    local sameOwner = self.Owner:Get() == otherUnitGroup.Owner:Get()
+    local closerToNextNode = self:_getDistanceToNextNode() < otherUnitGroup:_getDistanceToNextNode()
+    local hasMoreUnits = self.UnitCount:Get() > otherUnitGroup.UnitCount:Get()
+    local hasSameDestinationNode = self.Path:Get()[#self.Path:Get()] == otherUnitGroup.Path:Get()[#otherUnitGroup.Path:Get()]
+    local headingInOppositeDirections = self.Path:Get()[1] == otherUnitGroup.PreviousNode:Get()
+    if sameOwner and closerToNextNode and hasSameDestinationNode then
+        self.UnitCount:Set(self.UnitCount:Get() + otherUnitGroup.UnitCount:Get())
+        otherUnitGroup.Instance:Destroy()
+    elseif not sameOwner and not hasMoreUnits and headingInOppositeDirections then
+        self:Retreat()
+    end
+end
+
+function UnitGroup:_queryForUnitGroups()
+    local overlapParams = OverlapParams.new()
+    overlapParams.FilterType = Enum.RaycastFilterType.Exclude
+    overlapParams:AddToFilter(self.Instance)
+    overlapParams.CollisionGroup = QUERY_COLLISION_GROUP
+    local unitGroups = workspace:GetPartBoundsInRadius(self:GetPivot().Position, COLLISION_DISTANCE, overlapParams)
+    for _, unitGroup in unitGroups do
+        unitGroup = UnitGroup:FromInstance(unitGroup)
+        if unitGroup == nil then continue end
+        self:_onCollision(unitGroup)
+    end
 end
 
 return UnitGroup

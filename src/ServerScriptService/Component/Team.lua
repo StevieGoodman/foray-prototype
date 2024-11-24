@@ -41,6 +41,7 @@ function Team.new(name: string, brickColor: BrickColor)
 end
 
 function Team:Construct()
+    setmetatable(self, Team)
     self.Team = self.Instance :: Team
     self.Name = self.Team.Name
     self.Members = ValueObject.Value.new({})
@@ -78,6 +79,13 @@ end
 
 function Team:IsMember(player: Player)
     return player.Team == self.Team
+end
+
+function Team:__eq(other)
+    local success, result = pcall(function()
+        return self.Name == other.Name
+    end)
+    return success and result
 end
 
 Team.new("Neutral", BrickColor.new("Dark stone grey"))

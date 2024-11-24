@@ -58,6 +58,7 @@ function Node.FromId(id: number)
 end
 
 function Node:Construct()
+    setmetatable(self, Node)
     self.Id = Node.IdCounter
     Node.IdCounter += 1
     self.Instance.Name = `Node {self.Id}`
@@ -329,6 +330,10 @@ function Node:_updateUnitCounter()
     end
     text = string.sub(text, 1, -4)
     self._instances.UnitCounter.Text = text
+end
+
+function Node:__eq(other)
+    return self.Id == other.Id
 end
 
 return Node
