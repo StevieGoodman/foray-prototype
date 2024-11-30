@@ -9,7 +9,8 @@ local ValueObject = require(ReplicatedStorage.Packages.ValueObject)
 local FactoryComponent = require(ServerScriptService.Component.Factory)
 local NodeComponent = require(ServerScriptService.Component.Node)
 
-
+local MESH_ID = 132264144550547
+local MESH_DIMENSIONS = Vector3.new(1, 0.6, 1)
 local PRODUCTION_RATE_BOOST = 20
 local UPGRADE_COST = 2500
 
@@ -25,6 +26,9 @@ NodeComponent.RegisterUpgradeType({
     Name = "Powerplant",
     Component = Powerplant,
     Cost = UPGRADE_COST,
+    MeshId = MESH_ID,
+    MeshDimensions = MESH_DIMENSIONS,
+    MeshScale = 2,
 })
 
 function Powerplant:Construct()

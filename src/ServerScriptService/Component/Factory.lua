@@ -11,6 +11,7 @@ local NodeComponent = require(ServerScriptService.Component.Node)
 
 local DEFAULT_PRODUCTION_RATE = 10
 local UPGRADE_COST = 500
+local MESH_ID = 71997015173162
 
 local Factory = Component.new {
     Tag = "Factory",
@@ -24,7 +25,8 @@ NodeComponent.RegisterUpgradeType({
     Name = "Factory",
     Component = Factory,
     Cost = UPGRADE_COST,
-    MeshId = 119946346001868,
+    MeshId = MESH_ID,
+    MeshDimensions = Vector3.new(1, 1.38, 1),
 })
 
 function Factory:Construct()

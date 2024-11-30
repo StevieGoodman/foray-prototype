@@ -30,6 +30,7 @@ local Edge = Component.new {
 }
 
 function Edge:Construct()
+    self.Instance = self.Instance :: Beam
     self.Length = (self.Instance.Attachment0.WorldPosition - self.Instance.Attachment1.WorldPosition).Magnitude
 
     self._nodes = {
@@ -43,6 +44,13 @@ end
 function Edge:Start()
     self.Instance.Name = `Edge ({self._nodes[1].Id} ↔︎ {self._nodes[2].Id})`
     self:_register()
+
+    for _, node in self._nodes do
+        self:_updateBeamColor(node)
+        self._trove:Add(node.Instance:GetPropertyChangedSignal("Color"):Connect(function(_newColor)
+            self:_updateBeamColor()
+        end))
+    end
 end
 
 function Edge:Stop()
@@ -63,6 +71,14 @@ function Edge:_register()
         table.insert(edges, self)
         node.Edges:Set(edges)
     end
+end
+
+function Edge:_updateBeamColor()
+    local colorSequence = ColorSequence.new{
+        ColorSequenceKeypoint.new(0, self._nodes[1].Instance.Color),
+        ColorSequenceKeypoint.new(1, self._nodes[2].Instance.Color),
+    }
+    self.Instance.Color = colorSequence
 end
 
 return Edge

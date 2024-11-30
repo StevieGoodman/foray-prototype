@@ -13,7 +13,8 @@ local UnitGroupComponent = require(ServerScriptService.Component.UnitGroup)
 local RoundComponent = require(ServerScriptService.Component.Round)
 local TeamComponent = require(ServerScriptService.Component.Team)
 
-local EMPTY_MESH_ID = 75417688623420
+local EMPTY_MESH_ID = 130968899561152
+local EMPTY_MESH_DIMENSIONS = Vector3.new(1, 0.1, 1)
 local STARTING_UNIT_COUNTS = {
     Neutral = 25,
     Red = 1_000,
@@ -27,6 +28,8 @@ export type UpgradeType = {
     Component: table,
     Cost: number,
     MeshId: number,
+    MeshDimensions: number,
+    MeshScale: number?,
 }
 
 local Node = Component.new {
@@ -36,6 +39,7 @@ local Node = Component.new {
         ComponentExtensions.IsClass("BasePart"),
         ComponentExtensions.RequiresComponent(RoundComponent, Waiter.ancestors),
         ComponentExtensions.RequiresInstance("UnitCounter", Waiter.descendants, Waiter.matchTag),
+        ComponentExtensions.RequiresInstance("Attachment", Waiter.descendants, Waiter.matchClassName),
     },
 }
 
@@ -96,13 +100,17 @@ function Node:Start()
     self:_updateColor()
     self._trove:Add(self.Owner.Changed:Connect(function(newOwner)
         self._properties.Owner:Set(if newOwner ~= nil then newOwner.Name else nil)
-        self:_updateColor()
     end))
     self._trove:Add(self.UpgradeType.Changed:Connect(function(newUpgradeType)
         if newUpgradeType == nil then return end
-        local mesh = Waiter.getFirst(Waiter.descendants(self.Instance), Waiter.matchClassName("SpecialMesh"))
+        local mesh = Waiter.getFirst(Waiter.descendants(self.Instance), Waiter.matchClassName("SpecialMesh")) :: SpecialMesh
         if mesh == nil then return end
         mesh.MeshId = `rbxassetid://{newUpgradeType.MeshId or EMPTY_MESH_ID}`
+        mesh.Scale = Vector3.one * (newUpgradeType.MeshScale or 1)
+        self.Instance.Size = (newUpgradeType.MeshDimensions or EMPTY_MESH_DIMENSIONS) * (newUpgradeType.MeshScale or 1)
+        self.Instance.Position = Vector3.new(self.Instance.Position.X, self.Instance.Size.Y / 2, self.Instance.Position.Z)
+        self.Instance.PivotOffset = CFrame.new(0, -self.Instance.Size.Y / 2, 0)
+        self._instances.Attachment.WorldCFrame = CFrame.new(self.Instance.Position.X, EMPTY_MESH_DIMENSIONS.Y / 2, self.Instance.Position.Z)
     end))
 end
 
@@ -249,9 +257,8 @@ function Node:Upgrade(upgradeName: string)
     assert(upgrade ~= nil, `Upgrade "{upgradeName}" is not a valid upgrade name.`)
     local upgradeComponent = Node.UpgradeTypes[upgradeName].Component
     if self.Instance:HasTag(upgrade.Component.Tag) then return end
-    local cost = upgrade.Cost
-    if self:GetUnitCount(self.Owner:Get()):Get() <= cost then return end
-    self:TakeUnits(cost, self.Owner:Get(), false)
+    if self:GetUnitCount(self.Owner:Get()):Get() <= upgrade.Cost then return end
+    self:TakeUnits(upgrade.Cost, self.Owner:Get(), false)
     self:RemoveUpgrades()
     self.Instance:AddTag(upgradeComponent.Tag)
     self.UpgradeType:Set(upgrade)
@@ -281,6 +288,7 @@ function Node:_setUpUnitCount(team)
     self._trove:Add(self._unitCounts[team.Name])
 
     self._trove:Add(self._unitCounts[team.Name].Changed:Connect(function(_: number)
+        self:_updateColor()
         self:_updateUnitCounter()
         self:_updateOwner()
 
@@ -296,10 +304,26 @@ function Node:_setUpUnitCount(team)
 end
 
 function Node:_updateColor()
-    self.Instance.Color =
-        if self.Owner:Get() == nil
-        then BrickColor.new("Dark stone grey").Color
-        else self.Owner:Get().Color
+    local colorValues = {
+        Red = 0,
+        Green = 0,
+        Blue = 0,
+    }
+    local totalUnitCount = 0
+    for teamName, unitCount in self._unitCounts do
+        totalUnitCount += unitCount:Get()
+        local team = TeamComponent.FromName(teamName)
+        local color = team.Color
+        colorValues.Red += color.R * unitCount:Get()
+        colorValues.Green += color.G * unitCount:Get()
+        colorValues.Blue += color.B * unitCount:Get()
+    end
+    colorValues = {
+        Red = colorValues.Red / totalUnitCount,
+        Green = colorValues.Green / totalUnitCount,
+        Blue = colorValues.Blue / totalUnitCount,
+    }
+    self.Instance.Color = Color3.new(colorValues.Red, colorValues.Green, colorValues.Blue)
 end
 
 function Node:_updateOwner()
