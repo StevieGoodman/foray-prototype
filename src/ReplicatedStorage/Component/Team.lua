@@ -7,9 +7,16 @@ local ComponentExtensions = require(ReplicatedStorage.Packages.ComponentExtensio
 local Trove = require(ReplicatedStorage.Packages.Trove)
 local ValueObject = require(ReplicatedStorage.Packages.ValueObject)
 
+export type Team = {
+    Team: Team,
+    Name: string,
+    Members: ValueObject.Value<Player>,
+    Color: Color3,
+}
+
 local Team = Component.new {
     Tag = "Team",
-    Ancestors = { Teams },
+    Ancestors = { Teams, ReplicatedStorage },
     Extensions = {
         ComponentExtensions.IsClass("Team"),
     },
@@ -24,6 +31,7 @@ function Team.FromName(name: string)
 end
 
 function Team:Construct()
+    setmetatable(self, Team)
     self.Team = self.Instance :: Team
     self.Name = self.Team.Name
     self.Members = ValueObject.Value.new({})
@@ -54,6 +62,17 @@ end
 function Team:IsMember(player: Player?)
     player = player or Players.LocalPlayer
     return player.Team == self.Team
+end
+
+function Team:__eq(other)
+    local success, result = pcall(function()
+        return self.Name == other.Name
+    end)
+    return success and result
+end
+
+function Team:__tostring()
+    return self.Name
 end
 
 return Team

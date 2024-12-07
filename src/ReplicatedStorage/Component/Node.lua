@@ -5,7 +5,9 @@ local Component = require(ReplicatedStorage.Packages.Component)
 local ComponentExtensions = require(ReplicatedStorage.Packages.ComponentExtensions)
 local Trove = require(ReplicatedStorage.Packages.Trove)
 local ValueObject = require(ReplicatedStorage.Packages.ValueObject)
+local Waiter = require(ReplicatedStorage.Packages.Waiter)
 
+local RoundComponent = require(ReplicatedStorage.Component.Round)
 local TeamComponent = require(ReplicatedStorage.Component.Team)
 
 local Node = Component.new {
@@ -13,6 +15,7 @@ local Node = Component.new {
     Ancestors = { workspace },
     Extensions = {
         ComponentExtensions.IsClass("BasePart"),
+        ComponentExtensions.RequiresComponent(RoundComponent, Waiter.ancestors),
     },
 }
 
@@ -32,6 +35,8 @@ function Node:Construct()
     self._trove = Trove.new()
     self._trove:Add(self._comm)
     self._trove:Add(self.Owner)
+
+    self._components.Round:RegisterNode(self)
 end
 
 function Node:Start()

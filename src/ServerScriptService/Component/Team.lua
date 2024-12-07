@@ -1,5 +1,4 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local ServerStorage = game:GetService("ServerStorage")
 local Teams = game:GetService("Teams")
 
 local Component = require(ReplicatedStorage.Packages.Component)
@@ -7,9 +6,19 @@ local ComponentExtensions = require(ReplicatedStorage.Packages.ComponentExtensio
 local Trove = require(ReplicatedStorage.Packages.Trove)
 local ValueObject = require(ReplicatedStorage.Packages.ValueObject)
 
+export type Team = {
+    Team: Team,
+    Name: string,
+    Members: ValueObject.Value<Player>,
+    Color: Color3,
+    AddMember: (self: Team, player: Player) -> nil,
+    RemoveMember: (self: Team, player: Player) -> nil,
+    IsMember: (self: Team, player: Player) -> boolean,
+}
+
 local Team = Component.new {
     Tag = "Team",
-    Ancestors = { Teams, ServerStorage },
+    Ancestors = { Teams, ReplicatedStorage},
     Extensions = {
         ComponentExtensions.IsClass("Team"),
     },
@@ -31,7 +40,7 @@ function Team.new(name: string, brickColor: BrickColor)
     team.TeamColor = brickColor
     team.AutoAssignable = name ~= "Neutral"
     team:AddTag("Team")
-    team.Parent = if name ~= "Neutral" then Teams else ServerStorage
+    team.Parent = if name ~= "Neutral" then Teams else ReplicatedStorage
     return Team:WaitForInstance(team)
         :andThen(function(teamComponent)
             local teams = Team.Teams:Get()
@@ -86,6 +95,10 @@ function Team:__eq(other)
         return self.Name == other.Name
     end)
     return success and result
+end
+
+function Team:__tostring()
+    return self.Name
 end
 
 Team.new("Neutral", BrickColor.new("Dark stone grey"))

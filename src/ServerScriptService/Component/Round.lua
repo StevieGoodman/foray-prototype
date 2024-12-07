@@ -10,6 +10,7 @@ local Waiter = require(ReplicatedStorage.Packages.Waiter)
 
 local NotificationService = Knit.GetService("Notification")
 local TeamComponent = require(ServerScriptService.Component.Team)
+local RoundProgressSummary = require(ReplicatedStorage.Types.RoundProgressSummary)
 
 local GAME_END_THRESHOLD = 0.8
 
@@ -42,20 +43,9 @@ function Round:Construct()
     Round.IdCounter += 1
     self.Instance.Name = `Round {self.Id} ({self.MapName})`
 
-    self.NodeTallies = {}
-
     self._nodes = ValueObject.Value.new({})
     self._folders = ValueObject.Value.new({})
     self._trove = Trove.new()
-end
-
-function Round:Start()
-    for _, team in TeamComponent:GetAll() do
-        self.NodeTallies[team.Name] = ValueObject.Value.new(0)
-        self._trove:Add(self.NodeTallies[team.Name].Changed:Connect(function()
-            self:_checkForRoundEnd(team)
-        end))
-    end
 end
 
 function Round:End()
@@ -87,37 +77,32 @@ function Round:RegisterNode(node)
 
     table.insert(nodes, node)
     self._nodes:Set(nodes)
-    self._trove:Add(node.Owner.Changed:Connect(function()
-        self:_updateNodeTallies()
+    self._trove:Add(node.Owner.Changed:Connect(function(newOwner)
+        self:_checkForRoundEnd(newOwner)
     end))
 end
 
-function Round:_updateNodeTallies()
+function Round:GetProgressSummary(): RoundProgressSummary.RoundProgressSummary
+    -- Count the number of nodes each team owns
     local nodeTallies = {}
     for _, node in self._nodes:Get() do
         nodeTallies[node.Owner:Get().Name] = (nodeTallies[node.Owner:Get().Name] or 0) + 1
     end
+    -- Create the RoundProgressSummary object
+    local summary = RoundProgressSummary.new()
     for teamName, count in nodeTallies do
-        self.NodeTallies[teamName]:Set(count)
+        summary:AddTeam(TeamComponent.FromName(teamName), count)
     end
+    return summary
 end
 
-function Round:GetOwnershipPercentages(): {[string]: number}
-    local nodeTallies = self.NodeTallies
-    local ownershipPercentages = {}
-    for teamName, count in nodeTallies do
-        ownershipPercentages[teamName] = count:Get() / #self._nodes:Get()
-    end
-    return ownershipPercentages
-end
-
-function Round:_checkForRoundEnd(team)
+function Round:_checkForRoundEnd(team: TeamComponent.Team)
     if team.Name == "Neutral" then return end
-    local ownershipPercentages = self:GetOwnershipPercentages()
-    local ownershipPercentage = ownershipPercentages[team.Name]
+    local progressSummary = self:GetProgressSummary()
+    local teamSummary = progressSummary.Summary[team]
+    local ownershipPercentage = teamSummary.NodeCount / progressSummary.TotalNodeCount
     if ownershipPercentage < GAME_END_THRESHOLD then return end
-    local teamColorHex = TeamComponent.FromName(team.Name).Color:ToHex()
-    NotificationService:NotifyAll(`Team <font color="#{teamColorHex}">{team.Name}</font> has won the round!`)
+    NotificationService:NotifyAll(`<font color="#{team.Color:ToHex()}">{team.Name}</font> team has won the round!`)
     self:Reset()
 end
 
