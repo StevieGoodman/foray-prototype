@@ -1,7 +1,7 @@
 local CollectionService = game:GetService("CollectionService")
 local ServerScriptService = game:GetService("ServerScriptService")
 
-local RoundComponent = require(ServerScriptService.Component.Round)
+local RoundComponent = require(ServerScriptService.Component.Gameplay.Round)
 
 return function()
     local roundInstance = CollectionService:GetTagged(RoundComponent.Tag)[1]

@@ -7,7 +7,7 @@ local Trove = require(ReplicatedStorage.Packages.Trove)
 local Waiter = require(ReplicatedStorage.Packages.Waiter)
 
 local RoundProgressSummary = require(ReplicatedStorage.Types.RoundProgressSummary)
-local RoundComponent = require(ReplicatedStorage.Component.Round)
+local RoundComponent = require(ReplicatedStorage.Component.Gameplay.Round)
 
 local RoundProgressBar = Component.new {
     Tag = "RoundProgressBar",

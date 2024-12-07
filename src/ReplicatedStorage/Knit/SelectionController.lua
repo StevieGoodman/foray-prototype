@@ -8,7 +8,7 @@ local Knit = require(ReplicatedStorage.Packages.Knit)
 local Trove = require(ReplicatedStorage.Packages.Trove)
 local ValueObject = require(ReplicatedStorage.Packages.ValueObject)
 
-local NodeComponent = require(ReplicatedStorage.Component.Node)
+local NodeComponent = require(ReplicatedStorage.Component.Gameplay.Node)
 
 local CAMERA = workspace.CurrentCamera
 local SELECT_RADIUS_THRESHOLD = 1

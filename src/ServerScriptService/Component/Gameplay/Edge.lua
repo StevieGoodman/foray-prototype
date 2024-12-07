@@ -6,7 +6,7 @@ local ComponentExtensions = require(ReplicatedStorage.Packages.ComponentExtensio
 local Promise = require(ReplicatedStorage.Packages.Promise)
 local Trove = require(ReplicatedStorage.Packages.Trove)
 
-local NodeComponent = require(ServerScriptService.Component.Node)
+local NodeComponent = require(ServerScriptService.Component.Gameplay.Node)
 
 local Edge = Component.new {
     Tag = "Edge",

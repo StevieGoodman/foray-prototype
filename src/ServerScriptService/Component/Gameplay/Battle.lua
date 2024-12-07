@@ -5,8 +5,8 @@ local Component = require(ReplicatedStorage.Packages.Component)
 local ComponentExtensions = require(ReplicatedStorage.Packages.ComponentExtensions)
 local Trove = require(ReplicatedStorage.Packages.Trove)
 
-local NodeComponent = require(ServerScriptService.Component.Node)
-local TeamComponent = require(ServerScriptService.Component.Team)
+local NodeComponent = require(ServerScriptService.Component.Gameplay.Node)
+local TeamComponent = require(ServerScriptService.Component.Gameplay.Team)
 
 local COMBAT_MULTIPLIER = 0.1
 local MIN_CASUALITY_COUNT = 4

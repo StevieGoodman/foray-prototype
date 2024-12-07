@@ -1,6 +1,6 @@
 local ServerScriptService = game:GetService("ServerScriptService")
 
-local NodeComponent = require(ServerScriptService.Component.Node)
+local NodeComponent = require(ServerScriptService.Component.Gameplay.Node)
 
 local function GetInfoString(node): string
     local string =

@@ -4,7 +4,7 @@ local Component = require(ReplicatedStorage.Packages.Component)
 local Trove = require(ReplicatedStorage.Packages.Trove)
 local ValueObject = require(ReplicatedStorage.Packages.ValueObject)
 
-local TeamComponent = require(ReplicatedStorage.Component.Team)
+local TeamComponent = require(ReplicatedStorage.Component.Gameplay.Team)
 local RoundProgressSummary = require(ReplicatedStorage.Types.RoundProgressSummary)
 
 local Round = Component.new {

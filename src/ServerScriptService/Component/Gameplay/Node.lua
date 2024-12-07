@@ -9,9 +9,9 @@ local Trove = require(ReplicatedStorage.Packages.Trove)
 local ValueObject = require(ReplicatedStorage.Packages.ValueObject)
 local Waiter = require(ReplicatedStorage.Packages.Waiter)
 
-local UnitGroupComponent = require(ServerScriptService.Component.UnitGroup)
-local RoundComponent = require(ServerScriptService.Component.Round)
-local TeamComponent = require(ServerScriptService.Component.Team)
+local UnitGroupComponent = require(ServerScriptService.Component.Gameplay.UnitGroup)
+local RoundComponent = require(ServerScriptService.Component.Gameplay.Round)
+local TeamComponent = require(ServerScriptService.Component.Gameplay.Team)
 
 local EMPTY_MESH_ID = 130968899561152
 local EMPTY_MESH_DIMENSIONS = Vector3.new(1, 0.1, 1)

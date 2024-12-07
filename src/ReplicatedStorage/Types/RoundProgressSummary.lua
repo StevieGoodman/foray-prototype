@@ -1,6 +1,6 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
-local TeamComponent = require(ReplicatedStorage.Component.Team)
+local TeamComponent = require(ReplicatedStorage.Component.Gameplay.Team)
 
 export type RoundProgressSummary = {
     AddTeam: (self: RoundProgressSummary, team: TeamComponent.Team, number: number) -> RoundProgressSummary,

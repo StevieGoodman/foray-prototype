@@ -1,7 +1,7 @@
 local ServerScriptService = game:GetService("ServerScriptService")
 
-local NodeComponent = require(ServerScriptService.Component.Node)
-local TeamComponent = require(ServerScriptService.Component.Team)
+local NodeComponent = require(ServerScriptService.Component.Gameplay.Node)
+local TeamComponent = require(ServerScriptService.Component.Gameplay.Team)
 
 return function(commandContext, newOwner: Team?)
     newOwner = newOwner or commandContext.Executor.Team

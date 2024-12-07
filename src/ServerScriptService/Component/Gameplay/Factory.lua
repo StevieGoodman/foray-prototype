@@ -7,7 +7,7 @@ local TableUtil = require(ReplicatedStorage.Packages.TableUtil)
 local Trove = require(ReplicatedStorage.Packages.Trove)
 local ValueObject = require(ReplicatedStorage.Packages.ValueObject)
 
-local NodeComponent = require(ServerScriptService.Component.Node)
+local NodeComponent = require(ServerScriptService.Component.Gameplay.Node)
 
 local DEFAULT_PRODUCTION_RATE = 10
 local UPGRADE_COST = 500

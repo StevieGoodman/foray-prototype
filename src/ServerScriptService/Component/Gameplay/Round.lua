@@ -9,7 +9,7 @@ local ValueObject = require(ReplicatedStorage.Packages.ValueObject)
 local Waiter = require(ReplicatedStorage.Packages.Waiter)
 
 local NotificationService = Knit.GetService("Notification")
-local TeamComponent = require(ServerScriptService.Component.Team)
+local TeamComponent = require(ServerScriptService.Component.Gameplay.Team)
 local RoundProgressSummary = require(ReplicatedStorage.Types.RoundProgressSummary)
 
 local GAME_END_THRESHOLD = 0.8

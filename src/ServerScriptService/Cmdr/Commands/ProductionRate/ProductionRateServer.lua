@@ -1,6 +1,6 @@
 local ServerScriptService = game:GetService("ServerScriptService")
 
-local NodeComponent = require(ServerScriptService.Component.Node)
+local NodeComponent = require(ServerScriptService.Component.Gameplay.Node)
 
 return function(commandContext, newProductionRate: number)
     local selectedNode = commandContext:GetData()

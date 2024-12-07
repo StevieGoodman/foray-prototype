@@ -4,7 +4,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Component = require(ReplicatedStorage.Packages.Component)
 local Trove = require(ReplicatedStorage.Packages.Trove)
 
-local TeamComponent = require(ReplicatedStorage.Component.Team)
+local TeamComponent = require(ReplicatedStorage.Component.Gameplay.Team)
 
 local ColorToTeamColor = Component.new {
     Tag = "ColorToTeamColor",

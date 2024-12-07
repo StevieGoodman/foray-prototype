@@ -7,8 +7,8 @@ local Trove = require(ReplicatedStorage.Packages.Trove)
 local ValueObject = require(ReplicatedStorage.Packages.ValueObject)
 local Waiter = require(ReplicatedStorage.Packages.Waiter)
 
-local RoundComponent = require(ReplicatedStorage.Component.Round)
-local TeamComponent = require(ReplicatedStorage.Component.Team)
+local RoundComponent = require(ReplicatedStorage.Component.Gameplay.Round)
+local TeamComponent = require(ReplicatedStorage.Component.Gameplay.Team)
 
 local Node = Component.new {
     Tag = "Node",

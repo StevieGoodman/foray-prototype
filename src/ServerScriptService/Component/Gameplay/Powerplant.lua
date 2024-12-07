@@ -6,8 +6,8 @@ local ComponentExtensions = require(ReplicatedStorage.Packages.ComponentExtensio
 local Trove = require(ReplicatedStorage.Packages.Trove)
 local ValueObject = require(ReplicatedStorage.Packages.ValueObject)
 
-local FactoryComponent = require(ServerScriptService.Component.Factory)
-local NodeComponent = require(ServerScriptService.Component.Node)
+local FactoryComponent = require(ServerScriptService.Component.Gameplay.Factory)
+local NodeComponent = require(ServerScriptService.Component.Gameplay.Node)
 
 local MESH_ID = 132264144550547
 local MESH_DIMENSIONS = Vector3.new(1, 0.6, 1)
